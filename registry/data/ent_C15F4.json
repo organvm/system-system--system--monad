@@ -1,0 +1,15 @@
+{
+  "uid": "ent_C15F4",
+  "type": "axiom",
+  "expression": {
+    "name": "System Existence",
+    "slug": "axiom--existence",
+    "aliases": []
+  },
+  "created_at": "2026-04-05T17:20:26.682321+00:00",
+  "heartbeats": {
+    "operational_locus": "system--existence.md",
+    "formal_locus": "ATM-F-001:ATM-F-007",
+    "governance_locus": "GH-#7"
+  }
+}

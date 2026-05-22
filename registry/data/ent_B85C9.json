@@ -1,0 +1,15 @@
+{
+  "uid": "ent_B85C9",
+  "type": "axiom",
+  "expression": {
+    "name": "Well-Founded Composition",
+    "slug": "axiom--composition",
+    "aliases": []
+  },
+  "created_at": "2026-04-05T17:20:27.550722+00:00",
+  "heartbeats": {
+    "operational_locus": "composition--well-founded.md",
+    "formal_locus": "ATM-O-001:ATM-O-008",
+    "governance_locus": "GH-#7"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "System Relationship",
+  "description": "Versioned temporal schemas mapping entities to each other.",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "pattern": "^rel_[a-zA-Z0-9]{5}$"
+    },
+    "source_uid": {
+      "type": "string",
+      "pattern": "^ent_[a-zA-Z0-9]{5}$"
+    },
+    "target_uid": {
+      "type": "string",
+      "pattern": "^ent_[a-zA-Z0-9]{5}$"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["PARENT_CHILD", "REFERENCE", "DEPENDENCY", "IMPLEMENTS"],
+      "description": "The nature of the structural or semantic relationship."
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this relationship was established."
+    },
+    "valid_to": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "When this relationship was severed or superseded. Null if currently active."
+    }
+  },
+  "required": ["uid", "source_uid", "target_uid", "type", "valid_from"]
+}

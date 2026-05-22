@@ -1,0 +1,284 @@
+#!/usr/bin/env python3
+"""Triple-pulse validation for system entities.
+
+Checks three independent reference-sites per entity:
+  Self-pulse:   operational_locus file exists, valid frontmatter, state=active
+  Local-pulse:  entity JSON in registry, atoms registered in atom-registry
+  Remote-pulse: governance_locus non-empty, file committed and clean in git
+
+Classification:
+  3/3 CONSTITUTED  |  2/3 EMBRYONIC  |  1/3 NASCENT  |  0/3 VACUUM
+"""
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+try:
+    import yaml
+except ImportError:
+    sys.exit("fatal: PyYAML required — pip install pyyaml")
+
+ROOT = Path(__file__).resolve().parent.parent
+REGISTRY = ROOT / "registry" / "data"
+ATOM_REGISTRY = ROOT / "atom-registry.yaml"
+
+THRESHOLD_ORDER = ["constituted", "embryonic", "nascent", "vacuum"]
+THRESHOLD_MIN = {
+    "constituted": 3,
+    "embryonic": 2,
+    "nascent": 1,
+    "vacuum": 0,
+}
+LABELS = {3: "CONSTITUTED", 2: "EMBRYONIC", 1: "NASCENT", 0: "VACUUM"}
+
+
+def git(*args):
+    """Run a git command rooted at the project and return stdout."""
+    res = subprocess.run(
+        ["git", "-C", str(ROOT)] + list(args),
+        capture_output=True, text=True,
+    )
+    return res.returncode, res.stdout.strip(), res.stderr.strip()
+
+
+def load_entity(path):
+    with open(path) as f:
+        return json.load(f)
+
+
+def load_atom_registry():
+    """Return set of all registered atom IDs from atom-registry.yaml."""
+    if not ATOM_REGISTRY.exists():
+        return set()
+    with open(ATOM_REGISTRY) as f:
+        data = yaml.safe_load(f)
+    atoms = set()
+    if data and "atoms" in data:
+        atoms = set(data["atoms"].keys())
+    return atoms
+
+
+def parse_frontmatter(filepath):
+    """Extract YAML frontmatter from a markdown file. Returns (dict, error)."""
+    try:
+        text = filepath.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        return None, str(e)
+
+    if not text.startswith("---"):
+        return None, "no frontmatter delimiter"
+
+    end = text.find("\n---", 3)
+    if end == -1:
+        return None, "unclosed frontmatter"
+
+    try:
+        fm = yaml.safe_load(text[4:end])
+    except yaml.YAMLError as e:
+        return None, f"YAML parse error: {e}"
+
+    if not isinstance(fm, dict):
+        return None, "frontmatter is not a mapping"
+
+    return fm, None
+
+
+def check_self_pulse(entity):
+    """Self-pulse: file exists, valid frontmatter, state=active."""
+    hb = entity.get("heartbeats", {})
+    locus = hb.get("operational_locus")
+    if not locus or locus == "/":
+        return False, "no operational_locus"
+
+    filepath = ROOT / locus
+    if not filepath.exists():
+        return False, f"{locus} does not exist"
+
+    fm, err = parse_frontmatter(filepath)
+    if err:
+        return False, f"frontmatter invalid: {err}"
+
+    state = fm.get("state", "")
+    if state != "active":
+        return False, f"state={state}, expected active"
+
+    return True, f"{locus} exists, frontmatter valid, state=active"
+
+
+def check_local_pulse(entity, registered_atoms):
+    """Local-pulse: entity JSON in registry, atoms listed and registered."""
+    uid = entity["uid"]
+    entity_file = REGISTRY / f"{uid}.json"
+    if not entity_file.exists():
+        return False, f"{uid}.json not in registry"
+
+    # Check atom registration via operational_locus frontmatter
+    hb = entity.get("heartbeats", {})
+    locus = hb.get("operational_locus")
+    atom_count = 0
+    atoms_ok = True
+    missing_atoms = []
+
+    if locus and locus != "/":
+        filepath = ROOT / locus
+        if filepath.exists():
+            fm, _ = parse_frontmatter(filepath)
+            if fm and "atoms" in fm:
+                atom_ids = fm["atoms"]
+                atom_count = len(atom_ids)
+                for aid in atom_ids:
+                    if str(aid) not in registered_atoms:
+                        atoms_ok = False
+                        missing_atoms.append(str(aid))
+
+    if not atoms_ok:
+        return False, f"{uid}.json in registry, {atom_count} atoms but {len(missing_atoms)} unregistered"
+
+    if atom_count > 0:
+        return True, f"{uid}.json in registry, {atom_count} atoms registered"
+    return True, f"{uid}.json in registry, 0 atoms (no frontmatter atoms)"
+
+
+def check_remote_pulse(entity):
+    """Remote-pulse: governance_locus non-empty, file committed and clean."""
+    hb = entity.get("heartbeats", {})
+    gov = hb.get("governance_locus")
+
+    gov_ok = bool(gov) and gov.strip() != ""
+    if not gov_ok:
+        return False, "governance_locus is empty"
+
+    # Check git status of operational_locus
+    locus = hb.get("operational_locus")
+    if not locus or locus == "/":
+        return gov_ok, f"{gov}, no file to check git status"
+
+    # Is the file tracked?
+    rc, out, _ = git("ls-files", "--error-unmatch", locus)
+    if rc != 0:
+        return False, f"{gov}, but {locus} not committed"
+
+    # Is the file clean (no uncommitted changes)?
+    rc, out, _ = git("diff", "--name-only", locus)
+    if out:
+        return False, f"{gov}, but {locus} has uncommitted changes"
+
+    # Also check staged changes
+    rc, out, _ = git("diff", "--cached", "--name-only", locus)
+    if out:
+        return False, f"{gov}, but {locus} has staged changes"
+
+    return True, f"{gov}, file committed and clean"
+
+
+def check_entity(entity, registered_atoms):
+    """Run all three pulses. Return (score, results_dict)."""
+    uid = entity["uid"]
+    name = entity.get("expression", {}).get("name", uid)
+
+    self_ok, self_msg = check_self_pulse(entity)
+    local_ok, local_msg = check_local_pulse(entity, registered_atoms)
+    remote_ok, remote_msg = check_remote_pulse(entity)
+
+    score = sum([self_ok, local_ok, remote_ok])
+
+    return {
+        "uid": uid,
+        "name": name,
+        "self": (self_ok, self_msg),
+        "local": (local_ok, local_msg),
+        "remote": (remote_ok, remote_msg),
+        "score": score,
+        "label": LABELS[score],
+    }
+
+
+def format_result(r):
+    """Format a single entity result for terminal output."""
+    check = lambda ok: "\u2713" if ok else "\u2717"
+    lines = [
+        f"Entity: {r['uid']} ({r['name']})",
+        f"  Self:   {check(r['self'][0])} {r['self'][1]}",
+        f"  Local:  {check(r['local'][0])} {r['local'][1]}",
+        f"  Remote: {check(r['remote'][0])} {r['remote'][1]}",
+        f"  Pulse:  {r['score']}/3 \u2014 {r['label']}",
+    ]
+    return "\n".join(lines)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Triple-pulse validation for system entities."
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--entity", metavar="UID",
+        help="Check a single entity by UID (e.g. ent_C15F4).",
+    )
+    group.add_argument(
+        "--all", action="store_true",
+        help="Check all entities in registry/data/.",
+    )
+    parser.add_argument(
+        "--threshold",
+        choices=THRESHOLD_ORDER,
+        default=None,
+        help="Only show entities at or below this threshold.",
+    )
+    args = parser.parse_args()
+
+    registered_atoms = load_atom_registry()
+
+    # Collect entities to check
+    entities = []
+    if args.entity:
+        uid = args.entity
+        path = REGISTRY / f"{uid}.json"
+        if not path.exists():
+            print(f"fatal: {uid}.json not found in {REGISTRY}", file=sys.stderr)
+            sys.exit(1)
+        entities.append(load_entity(path))
+    else:
+        for p in sorted(REGISTRY.glob("ent_*.json")):
+            entities.append(load_entity(p))
+
+    if not entities:
+        print("No entities found.", file=sys.stderr)
+        sys.exit(1)
+
+    # Run checks
+    results = [check_entity(e, registered_atoms) for e in entities]
+
+    # Apply threshold filter
+    if args.threshold:
+        max_score = THRESHOLD_MIN[args.threshold]
+        # Show entities at or below the threshold level
+        # constituted=3 shows all, embryonic=2 shows <=2, nascent=1 shows <=1, vacuum=0 shows 0
+        if args.threshold == "constituted":
+            # Show all — no filtering
+            pass
+        else:
+            results = [r for r in results if r["score"] <= max_score]
+
+    # Output
+    for i, r in enumerate(results):
+        if i > 0:
+            print()
+        print(format_result(r))
+
+    # Summary when checking all
+    if args.all and len(results) > 0:
+        counts = {label: 0 for label in LABELS.values()}
+        for r in results:
+            counts[r["label"]] += 1
+        print()
+        print("--- Summary ---")
+        for label in ["CONSTITUTED", "EMBRYONIC", "NASCENT", "VACUUM"]:
+            print(f"  {label}: {counts[label]}")
+        print(f"  Total: {len(results)}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Law 7 Enforcement — Tripartite Convergence Audit.
+
+Scans all entities, atom-registry documents, and IRF items for heartbeat coverage.
+Reports canonical/correspondence/monologue/embryonic status and identifies VACUUMs.
+
+Exit 0 if all entities canonical, exit 1 if any vacuums exist.
+"""
+
+import argparse
+import json
+import glob
+import os
+import sys
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
+root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+registry_path = os.path.join(root, "registry", "data")
+atom_registry_path = os.path.join(root, "atom-registry.yaml")
+irf_registry_path = os.path.join(root, "registry", "irf-registry.yaml")
+
+HEARTBEAT_KEYS = ["formal_locus", "operational_locus", "governance_locus"]
+
+
+def load_entities():
+    entities = []
+    for f in sorted(glob.glob(os.path.join(registry_path, "ent_*.json"))):
+        with open(f) as fh:
+            entities.append(json.load(fh))
+    return entities
+
+
+def classify_entity(ent):
+    hb = ent.get("heartbeats", {})
+    count = sum(1 for k in HEARTBEAT_KEYS if k in hb)
+    missing = [k for k in HEARTBEAT_KEYS if k not in hb]
+    return count, missing
+
+
+def load_yaml(path):
+    if yaml is None:
+        # Fallback: minimal YAML parsing for simple structures
+        return None
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+
+def audit_entities(entities):
+    buckets = {3: [], 2: [], 1: [], 0: []}
+    vacuums = []
+    for ent in entities:
+        count, missing = classify_entity(ent)
+        slug = ent.get("expression", {}).get("slug", "?")
+        uid = ent["uid"]
+        buckets[count].append(f"{uid} ({slug})")
+        if missing:
+            vacuums.append((uid, slug, missing))
+    return buckets, vacuums
+
+
+def audit_atom_documents():
+    if not os.path.exists(atom_registry_path):
+        return [], []
+    data = load_yaml(atom_registry_path)
+    if data is None:
+        return [], []
+    docs = data.get("documents", {})
+    wired = []
+    unwired = []
+    for doc_id, doc in docs.items():
+        uid = doc.get("entity_uid")
+        if uid:
+            wired.append(doc_id)
+        else:
+            unwired.append(doc_id)
+    return wired, unwired
+
+
+def audit_irf():
+    if not os.path.exists(irf_registry_path):
+        return [], []
+    data = load_yaml(irf_registry_path)
+    if data is None:
+        return [], []
+    items = data.get("items", {})
+    wired = []
+    vacuums = []
+    for irf_id, item in items.items():
+        missing = []
+        for field in ["entity_uid", "operational_locus", "governance_locus"]:
+            if not item.get(field):
+                missing.append(field)
+        if missing:
+            vacuums.append((irf_id, item.get("description", ""), missing))
+        else:
+            wired.append(irf_id)
+    return wired, vacuums
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Law 7 Convergence Audit")
+    parser.add_argument("--json", action="store_true", help="Machine-readable JSON output")
+    args = parser.parse_args()
+
+    entities = load_entities()
+    buckets, entity_vacuums = audit_entities(entities)
+    atom_wired, atom_unwired = audit_atom_documents()
+    irf_wired, irf_vacuums = audit_irf()
+
+    has_vacuums = bool(entity_vacuums) or bool(atom_unwired) or bool(irf_vacuums)
+
+    if args.json:
+        result = {
+            "entities": {
+                "total": len(entities),
+                "canonical": buckets[3],
+                "correspondence": buckets[2],
+                "monologue": buckets[1],
+                "embryonic": buckets[0],
+            },
+            "entity_vacuums": [
+                {"uid": v[0], "slug": v[1], "missing": v[2]} for v in entity_vacuums
+            ],
+            "atom_documents": {"wired": atom_wired, "unwired": atom_unwired},
+            "irf": {
+                "wired": irf_wired,
+                "vacuums": [
+                    {"id": v[0], "description": v[1], "missing": v[2]} for v in irf_vacuums
+                ],
+            },
+            "coverage_pct": len(buckets[3]) * 100 // max(len(entities), 1),
+            "has_vacuums": has_vacuums,
+        }
+        print(json.dumps(result, indent=2))
+    else:
+        labels = {3: "Canonical", 2: "Correspondence", 1: "Monologue", 0: "Embryonic"}
+        symbols = {3: "✓", 2: "◐", 1: "○", 0: "·"}
+        print(f"=== CONVERGENCE AUDIT (Law 7) ===")
+        print(f"Entities: {len(entities)} total\n")
+        for level in [3, 2, 1, 0]:
+            items = buckets[level]
+            print(f"  {labels[level]:20s} (|H|={level}): {len(items)}")
+            for item in items:
+                print(f"    {symbols[level]} {item}")
+
+        if entity_vacuums or atom_unwired or irf_vacuums:
+            print(f"\n─── VACUUM REPORT ───")
+            for uid, slug, missing in entity_vacuums:
+                print(f"  {uid} ({slug}): missing {', '.join(missing)}")
+            for doc_id in atom_unwired:
+                print(f"  {doc_id}: missing entity_uid")
+            for irf_id, desc, missing in irf_vacuums:
+                print(f"  {irf_id}: missing {', '.join(missing)}")
+
+        total_atoms = len(atom_wired) + len(atom_unwired)
+        total_irf = len(irf_wired) + len(irf_vacuums)
+        print(f"\n─── SUMMARY ───")
+        print(f"  Coverage: {len(buckets[3]) * 100 // max(len(entities), 1)}% canonical")
+        print(f"  Atom documents: {len(atom_wired)}/{total_atoms} wired")
+        print(f"  IRF items: {len(irf_wired)}/{total_irf} fully wired")
+
+    sys.exit(1 if has_vacuums else 0)
+
+
+if __name__ == "__main__":
+    main()

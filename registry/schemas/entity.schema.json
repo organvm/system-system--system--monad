@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "System Entity",
+  "description": "Immutable definition of what exists in the system registry, mapped by UID.",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "pattern": "^ent_[a-zA-Z0-9]{5}$",
+      "description": "The eternal essence identifier of the object."
+    },
+    "type": {
+      "type": "string",
+      "description": "Domain or classification type of the entity (e.g., document, component, system)."
+    },
+    "expression": {
+      "type": "object",
+      "description": "Mutable display and referral properties.",
+      "properties": {
+        "name": { 
+          "type": "string",
+          "description": "Human-readable display name."
+        },
+        "slug": { 
+          "type": "string",
+          "description": "Kebab-case string suitable for filenames or URLs."
+        },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Previous names or slugs maintained for historical search resolution."
+        }
+      },
+      "required": ["name", "slug"]
+    },
+    "heartbeats": {
+      "type": "object",
+      "description": "Tripartite Convergence references establishing ultimate identity proof.",
+      "properties": {
+        "formal_locus": { "type": "string", "description": "URI/UID in the formal registry/index." },
+        "operational_locus": { "type": "string", "description": "URI/Path in the active substrate/workspace." },
+        "governance_locus": { "type": "string", "description": "URI to the external tracking/adjudication platform (e.g. GitHub Issue)." }
+      }
+    },
+    "created_at": { 
+      "type": "string", 
+      "format": "date-time" 
+    }
+  },
+  "required": ["uid", "type", "expression", "created_at"]
+}

@@ -1,0 +1,256 @@
+# System Manifest — source of truth for piece resolution
+# Schema is scale-invariant: identical structure at every σ.
+# A piece with composition.type = "system" decomposes into a sub-manifest at σ-1.
+
+[meta]
+# Validated by `piece --validate` against sys.toml
+version = "0.2.0"
+schema  = "piece/v2"
+scale   = 0
+layers  = ["distinction", "token", "relation", "rule", "flow", "feedback", "governance"]
+
+# ─── Layer 0: Distinctions ──────────────────────────────────────
+
+[pieces.distinction--boundary]
+layer        = 0
+kind         = "distinction"
+differentia  = "boundary"
+[pieces.distinction--boundary.interface]
+creates      = "inside/outside"
+requires     = []
+arity        = 2
+[pieces.distinction--boundary.instance]
+state        = "active"
+irreducible  = true
+[pieces.distinction--boundary.composition]
+type         = "atomic"
+
+[pieces.distinction--type]
+layer        = 0
+kind         = "distinction"
+differentia  = "type"
+[pieces.distinction--type.interface]
+creates      = "member/non-member"
+requires     = ["distinction--boundary"]
+arity        = "n"
+[pieces.distinction--type.instance]
+state        = "active"
+irreducible  = true
+[pieces.distinction--type.composition]
+type         = "atomic"
+
+# ─── Layer 1: Tokens ────────────────────────────────────────────
+
+[pieces.token--name]
+layer        = 1
+kind         = "token"
+differentia  = "name"
+[pieces.token--name.interface]
+stabilizes   = "distinction--boundary"
+requires     = ["distinction--boundary"]
+persistence  = "session"
+[pieces.token--name.instance]
+state        = "active"
+format       = "utf8"
+encoding     = "canonical"
+[pieces.token--name.composition]
+type         = "system"
+manifest     = "scales/-1/token--name.toml"
+piece_count  = 4
+
+[pieces.token--handle]
+layer        = 1
+kind         = "token"
+differentia  = "handle"
+[pieces.token--handle.interface]
+stabilizes   = "distinction--type"
+requires     = ["distinction--type"]
+persistence  = "runtime"
+[pieces.token--handle.instance]
+state        = "active"
+format       = "opaque"
+encoding     = "pointer"
+[pieces.token--handle.composition]
+type         = "atomic"
+
+# ─── Layer 2: Relations ─────────────────────────────────────────
+
+[pieces.relation--composition]
+layer        = 2
+kind         = "relation"
+differentia  = "composition"
+[pieces.relation--composition.interface]
+binds        = ["token--*", "token--*"]
+arity        = 2
+directed     = true
+operator     = "◁"
+[pieces.relation--composition.instance]
+state        = "active"
+reflexive    = false
+transitive   = true
+[pieces.relation--composition.composition]
+type         = "system"
+manifest     = "scales/-1/relation--composition.toml"
+piece_count  = 4
+
+[pieces.relation--sequence]
+layer        = 2
+kind         = "relation"
+differentia  = "sequence"
+[pieces.relation--sequence.interface]
+binds        = ["token--*", "token--*"]
+arity        = 2
+directed     = true
+operator     = "≺"
+[pieces.relation--sequence.instance]
+state        = "active"
+reflexive    = false
+transitive   = true
+total_within_parent = true
+[pieces.relation--sequence.composition]
+type         = "atomic"
+
+[pieces.relation--dependency]
+layer        = 2
+kind         = "relation"
+differentia  = "dependency"
+[pieces.relation--dependency.interface]
+binds        = ["token--*", "token--*"]
+arity        = 2
+directed     = true
+operator     = "→"
+[pieces.relation--dependency.instance]
+state        = "active"
+reflexive    = false
+transitive   = true
+[pieces.relation--dependency.composition]
+type         = "atomic"
+
+# ─── Layer 3: Rules ─────────────────────────────────────────────
+
+[pieces.rule--schema]
+layer        = 3
+kind         = "rule"
+differentia  = "schema"
+[pieces.rule--schema.interface]
+constrains   = ["relation--*"]
+requires     = ["relation--composition"]
+enforcement  = "structural"
+[pieces.rule--schema.instance]
+state        = "active"
+violable     = false
+scope        = "local"
+[pieces.rule--schema.composition]
+type         = "atomic"
+
+[pieces.rule--invariant]
+layer        = 3
+kind         = "rule"
+differentia  = "invariant"
+[pieces.rule--invariant.interface]
+constrains   = ["token--*", "relation--*"]
+requires     = ["relation--composition"]
+enforcement  = "runtime"
+[pieces.rule--invariant.instance]
+state        = "active"
+violable     = false
+scope        = "global"
+[pieces.rule--invariant.composition]
+type         = "atomic"
+
+# ─── Layer 4: Flows ─────────────────────────────────────────────
+
+[pieces.flow--pipeline]
+layer        = 4
+kind         = "flow"
+differentia  = "pipeline"
+[pieces.flow--pipeline.interface]
+activates    = ["rule--*"]
+requires     = ["rule--schema"]
+direction    = "forward"
+[pieces.flow--pipeline.instance]
+state        = "idle"
+steps        = 0
+throughput   = 0
+[pieces.flow--pipeline.composition]
+type         = "atomic"
+
+[pieces.flow--signal]
+layer        = 4
+kind         = "flow"
+differentia  = "signal"
+[pieces.flow--signal.interface]
+activates    = ["rule--*"]
+requires     = ["rule--schema"]
+direction    = "broadcast"
+[pieces.flow--signal.instance]
+state        = "idle"
+listeners    = 0
+propagation  = "async"
+[pieces.flow--signal.composition]
+type         = "atomic"
+
+# ─── Layer 5: Feedback ──────────────────────────────────────────
+
+[pieces.feedback--regulation]
+layer        = 5
+kind         = "feedback"
+differentia  = "regulation"
+[pieces.feedback--regulation.interface]
+loops        = ["flow--pipeline"]
+requires     = ["flow--pipeline"]
+mode         = "negative"
+[pieces.feedback--regulation.instance]
+state        = "dormant"
+gain         = 1.0
+damping      = 0.0
+oscillating  = false
+[pieces.feedback--regulation.composition]
+type         = "atomic"
+
+[pieces.feedback--amplification]
+layer        = 5
+kind         = "feedback"
+differentia  = "amplification"
+[pieces.feedback--amplification.interface]
+loops        = ["flow--signal"]
+requires     = ["flow--signal"]
+mode         = "positive"
+[pieces.feedback--amplification.instance]
+state        = "dormant"
+gain         = 1.0
+saturated    = false
+[pieces.feedback--amplification.composition]
+type         = "atomic"
+
+# ─── Layer 6: Governance ────────────────────────────────────────
+
+[pieces.governance--constitution]
+layer        = 6
+kind         = "governance"
+differentia  = "constitution"
+[pieces.governance--constitution.interface]
+governs      = ["rule--*", "feedback--*"]
+requires     = ["feedback--regulation"]
+authority    = "root"
+[pieces.governance--constitution.instance]
+state        = "dormant"
+amendments   = 0
+frozen       = false
+[pieces.governance--constitution.composition]
+type         = "atomic"
+
+[pieces.governance--policy]
+layer        = 6
+kind         = "governance"
+differentia  = "policy"
+[pieces.governance--policy.interface]
+governs      = ["rule--*"]
+requires     = ["governance--constitution"]
+authority    = "delegated"
+[pieces.governance--policy.instance]
+state        = "dormant"
+scope        = "local"
+expiry       = "none"
+[pieces.governance--policy.composition]
+type         = "atomic"

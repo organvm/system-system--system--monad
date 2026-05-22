@@ -1,0 +1,15 @@
+{
+  "uid": "ent_231BC",
+  "type": "derivation",
+  "expression": {
+    "name": "Parameter Decomposition of Seven Studies",
+    "slug": "derivation--parameter-decomp",
+    "aliases": []
+  },
+  "created_at": "2026-04-05T17:20:44.063253+00:00",
+  "heartbeats": {
+    "operational_locus": "parameter-decomposition--seven-studies.md",
+    "formal_locus": "derivation--parameter-decomp",
+    "governance_locus": "GH-#8"
+  }
+}

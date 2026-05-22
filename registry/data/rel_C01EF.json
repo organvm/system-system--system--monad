@@ -1,0 +1,8 @@
+{
+  "uid": "rel_C01EF",
+  "source_uid": "ent_30419",
+  "target_uid": "ent_BEDF9",
+  "type": "PARENT_CHILD",
+  "valid_from": "2026-04-05T17:20:45.797568+00:00",
+  "valid_to": null
+}

@@ -1,0 +1,81 @@
+# σ=-1 Manifest: internals of relation--composition
+# The ◁ operator itself is a system: distinction of part/whole,
+# tokens for parent and child roles, bound by the containment constraint.
+
+[meta]
+# Validated by `piece --validate` against sys.toml
+version  = "0.2.0"
+schema   = "piece/v2"
+scale    = -1
+parent   = "relation--composition"
+parent_scale = 0
+layers   = ["distinction", "token", "relation"]
+
+# ─── Layer 0: Distinctions ──────────────────────────────────────
+
+[pieces.distinction--partwhole]
+layer        = 0
+kind         = "distinction"
+differentia  = "partwhole"
+[pieces.distinction--partwhole.interface]
+creates      = "part/whole"
+requires     = []
+arity        = 2
+[pieces.distinction--partwhole.instance]
+state        = "active"
+irreducible  = true
+[pieces.distinction--partwhole.composition]
+type         = "atomic"
+
+# ─── Layer 1: Tokens ────────────────────────────────────────────
+
+[pieces.token--parent]
+layer        = 1
+kind         = "token"
+differentia  = "parent"
+[pieces.token--parent.interface]
+stabilizes   = "distinction--partwhole"
+requires     = ["distinction--partwhole"]
+persistence  = "structural"
+role         = "whole"
+[pieces.token--parent.instance]
+state        = "active"
+format       = "reference"
+encoding     = "pointer"
+[pieces.token--parent.composition]
+type         = "atomic"
+
+[pieces.token--child]
+layer        = 1
+kind         = "token"
+differentia  = "child"
+[pieces.token--child.interface]
+stabilizes   = "distinction--partwhole"
+requires     = ["distinction--partwhole"]
+persistence  = "structural"
+role         = "part"
+[pieces.token--child.instance]
+state        = "active"
+format       = "reference"
+encoding     = "pointer"
+[pieces.token--child.composition]
+type         = "atomic"
+
+# ─── Layer 2: Relations ─────────────────────────────────────────
+
+[pieces.relation--containment]
+layer        = 2
+kind         = "relation"
+differentia  = "containment"
+[pieces.relation--containment.interface]
+binds        = ["token--child", "token--parent"]
+arity        = 2
+directed     = true
+operator     = "∈"
+[pieces.relation--containment.instance]
+state        = "active"
+reflexive    = false
+antisymmetric = true
+transitive   = true
+[pieces.relation--containment.composition]
+type         = "atomic"

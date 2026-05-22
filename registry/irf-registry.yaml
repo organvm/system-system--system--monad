@@ -1,0 +1,160 @@
+# IRF Registry — Information Reference Framework
+# Formal tracking index for system-system--system
+# Each item tracks a gap, task, or formal reference requiring resolution.
+# Cross-references wire to entity UIDs (registry), file paths (operational), and GitHub issues (governance).
+
+meta:
+  version: "1.0.0"
+  description: "Standalone formal index — the authoritative table of all IRF items"
+  generated: "2026-04-05"
+  law: "Law 7: Tripartite Convergence"
+  schema_note: "status ∈ {OPEN, RESOLVED, SUPERSEDED}; null cross-refs are VACUUMs"
+
+items:
+
+  # ─── S54 items ──────────────────────────────────────────────────────
+
+  IRF-SYS-056:
+    description: "Full 48-hour archaeology pass"
+    status: OPEN
+    session_origin: "S54"
+    entity_uid: null
+    operational_locus: null
+    governance_locus: null
+
+  # ─── S55 items (059-062): reconciliation workstream ─────────────────
+
+  IRF-SYS-059:
+    description: "Materon formal proofs — derivation completeness"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: "ent_3B709"
+    operational_locus: "materon--formalization.md"
+    governance_locus: "GH-#5"
+
+  IRF-SYS-060:
+    description: "Escrow protocol tests — validator pipeline coverage"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: "ent_4E79B"
+    operational_locus: "escrow-protocol.md"
+    governance_locus: null
+
+  IRF-SYS-061:
+    description: "EXCISED propagation — ATM-O-006 remediation verification"
+    status: RESOLVED
+    session_origin: "S55"
+    entity_uid: "ent_B85C9"
+    operational_locus: "composition--well-founded.md"
+    governance_locus: null
+    resolved_in: "S55 prompt 4 — commit f646358"
+
+  IRF-SYS-062:
+    description: "MCP prompt injection — minimax session voided"
+    status: RESOLVED
+    session_origin: "S55"
+    entity_uid: null
+    operational_locus: null
+    governance_locus: null
+    resolved_in: "S55 prompt 5 — reconciliation performed manually"
+
+  # ─── S55 items (063-069): N/A vacuum sweep ──────────────────────────
+
+  IRF-SYS-063:
+    description: "Omega Scorecard — no formal specification criterion"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: null
+    operational_locus: null
+    governance_locus: "GH-#5"
+
+  IRF-SYS-064:
+    description: "Registry schema excludes non-organ entities"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: null
+    operational_locus: "registry/schemas/entity.schema.json"
+    governance_locus: "GH-#5"
+
+  IRF-SYS-065:
+    description: "Testament Chain — 10 unwitnessed commits"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: null
+    operational_locus: null
+    governance_locus: "GH-#5"
+
+  IRF-SYS-066:
+    description: "Seed contracts — sys.toml invisible to governance tooling"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: null
+    operational_locus: "sys.toml"
+    governance_locus: "GH-#5"
+
+  IRF-SYS-067:
+    description: "CLAUDE.md — no agent navigation surface"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: null
+    operational_locus: "CLAUDE.md"
+    governance_locus: "GH-#5"
+
+  IRF-SYS-068:
+    description: "Inquiry Log — materon work has no SGO commission"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: null
+    operational_locus: null
+    governance_locus: "GH-#5"
+
+  IRF-SYS-069:
+    description: "Companion indices — σ_E not specified as source domain"
+    status: OPEN
+    session_origin: "S55"
+    entity_uid: null
+    operational_locus: null
+    governance_locus: "GH-#5"
+
+  # ─── S56 items: subsumption derivation ──────────────────────────────
+
+  IRF-SYS-070:
+    description: "Subsumption derivation — governance_locus VACUUM (no GitHub issue yet)"
+    status: OPEN
+    session_origin: "S56"
+    entity_uid: "ent_E7D9B"
+    operational_locus: "subsumption--external-primitives.md"
+    governance_locus: null
+
+  # ─── S57 items: monad vacuum wiring ─────────────────────────────
+
+  IRF-SYS-102:
+    description: "Monad 16-VACUUM resolution — frontmatter entity_uid wiring for all flat documents"
+    status: RESOLVED
+    session_origin: "S57"
+    entity_uid: null
+    operational_locus: "atom-registry.yaml"
+    governance_locus: null  # VACUUM — no GitHub issue yet
+    resolved_in: "S57 — 14 entities stamped, 2 entities created (ent_C33B9, ent_B7087), enricher fixed"
+    note: "Gemini cross-session diagnosis verified; ratio was inverted (9/25 not 24/25); entities already existed in registry"
+
+  IRF-SYS-103:
+    description: "sys-enrich-frontmatter — registry/data/ fallback resolution added"
+    status: RESOLVED
+    session_origin: "S57"
+    entity_uid: null
+    operational_locus: "bin/sys-enrich-frontmatter"
+    governance_locus: null  # VACUUM — no GitHub issue yet
+    resolved_in: "S57 — resolve_entity_by_locus() added as third-tier fallback"
+    note: "Root-cause fix: enricher now scans entity JSONs by operational_locus when envelope and atom-registry fail"
+
+  # ─── Pre-existing formal references ─────────────────────────────────
+
+  IRF-SYS-099:
+    description: "Materon — Programmable Materia formal proof and convergence"
+    status: RESOLVED
+    session_origin: "S55"
+    entity_uid: "ent_534B8"
+    operational_locus: "/triptych"
+    governance_locus: "GH-#102"
+    resolved_in: "S55 — first tripartite convergence achieved"

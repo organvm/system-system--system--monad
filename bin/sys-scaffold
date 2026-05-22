@@ -1,0 +1,355 @@
+#!/usr/bin/env python3
+"""Scaffold a new project from the system-system--system monad.
+
+Reads scales/+1/scaffold.toml for configuration, copies seed atoms,
+renders templates, copies bin tools and registry schemas, initializes git.
+
+Usage:
+    sys-scaffold <project-name> [--organ ORGAN] [--domain DOMAIN] [--target-dir DIR]
+"""
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from datetime import date
+from pathlib import Path
+
+# ── Resolve monad root ────────────────────────────────────────────
+
+MONAD_ROOT = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+SCAFFOLD_CONFIG = MONAD_ROOT / "scales" / "+1" / "scaffold.toml"
+
+
+# ── Minimal TOML parser ──────────────────────────────────────────
+# Handles the subset of TOML used in scaffold.toml: tables, key=value,
+# arrays, and inline tables. Avoids external dependency.
+
+def _parse_toml_value(raw: str):
+    """Parse a single TOML value string."""
+    raw = raw.strip()
+    if raw.startswith('"') and raw.endswith('"'):
+        return raw[1:-1]
+    if raw.startswith("'") and raw.endswith("'"):
+        return raw[1:-1]
+    if raw.lower() in ("true", "false"):
+        return raw.lower() == "true"
+    if raw.startswith("[") and raw.endswith("]"):
+        inner = raw[1:-1].strip()
+        if not inner:
+            return []
+        items = []
+        for item in _split_toml_array(inner):
+            items.append(_parse_toml_value(item.strip()))
+        return items
+    if raw.startswith("{") and raw.endswith("}"):
+        inner = raw[1:-1].strip()
+        result = {}
+        if inner:
+            for pair in inner.split(","):
+                k, v = pair.split("=", 1)
+                result[k.strip().strip('"').strip("'")] = _parse_toml_value(v.strip())
+        return result
+    try:
+        return int(raw)
+    except ValueError:
+        pass
+    try:
+        return float(raw)
+    except ValueError:
+        pass
+    return raw
+
+
+def _split_toml_array(s: str) -> list:
+    """Split a TOML array body respecting nested brackets and quotes."""
+    items = []
+    depth = 0
+    current = []
+    in_str = None
+    for ch in s:
+        if in_str:
+            current.append(ch)
+            if ch == in_str:
+                in_str = None
+            continue
+        if ch in ('"', "'"):
+            in_str = ch
+            current.append(ch)
+            continue
+        if ch in ("[", "{"):
+            depth += 1
+            current.append(ch)
+        elif ch in ("]", "}"):
+            depth -= 1
+            current.append(ch)
+        elif ch == "," and depth == 0:
+            items.append("".join(current))
+            current = []
+        else:
+            current.append(ch)
+    if current:
+        joined = "".join(current).strip()
+        if joined:
+            items.append(joined)
+    return items
+
+
+def _strip_inline_comment(val: str) -> str:
+    """Strip trailing # comments that are outside quotes."""
+    in_q = None
+    for i, ch in enumerate(val):
+        if in_q:
+            if ch == in_q:
+                in_q = None
+        elif ch in ('"', "'"):
+            in_q = ch
+        elif ch == "#":
+            return val[:i].strip()
+    return val
+
+
+def parse_toml(path: Path) -> dict:
+    """Parse a TOML file into a nested dict. Handles tables, dotted keys,
+    and multi-line arrays (lines continued until brackets balance)."""
+    result = {}
+    current_table = result
+
+    with open(path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        i += 1
+        # Skip comments and blank lines
+        if not line or line.startswith("#"):
+            continue
+        # Table header — match [foo.bar] but NOT [[array-of-tables]]
+        m = re.match(r"^\[([^\[\]]+)\]$", line)
+        if m:
+            parts = m.group(1).split(".")
+            current_table = result
+            for part in parts:
+                if part not in current_table:
+                    current_table[part] = {}
+                current_table = current_table[part]
+            continue
+        # Key = value (possibly multi-line)
+        if "=" in line:
+            key, val = line.split("=", 1)
+            key = key.strip().strip('"').strip("'")
+            val = val.strip()
+            val = _strip_inline_comment(val)
+
+            # Detect unclosed brackets — accumulate continuation lines
+            open_brackets = val.count("[") - val.count("]")
+            open_braces = val.count("{") - val.count("}")
+            while (open_brackets > 0 or open_braces > 0) and i < len(lines):
+                cont = lines[i].strip()
+                i += 1
+                if not cont or cont.startswith("#"):
+                    continue
+                cont = _strip_inline_comment(cont)
+                val += " " + cont
+                open_brackets = val.count("[") - val.count("]")
+                open_braces = val.count("{") - val.count("}")
+
+            current_table[key] = _parse_toml_value(val)
+
+    return result
+
+
+# ── Template renderer ─────────────────────────────────────────────
+
+def render_template(content: str, variables: dict) -> str:
+    """Replace {{key}} placeholders with values from variables dict."""
+    for key, value in variables.items():
+        content = content.replace("{{" + key + "}}", str(value))
+    return content
+
+
+# ── Main ──────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Scaffold a new project from the system-system--system monad."
+    )
+    parser.add_argument(
+        "project_name",
+        help="Name for the new project (used as directory name and identity).",
+    )
+    parser.add_argument(
+        "--organ",
+        default=None,
+        help="ORGANVM organ (e.g., LIMINAL, META). Defaults to scaffold config.",
+    )
+    parser.add_argument(
+        "--domain",
+        default=None,
+        help="Primary domain (e.g., Generative, Foundation). Defaults to scaffold config.",
+    )
+    parser.add_argument(
+        "--target-dir",
+        default=None,
+        help="Parent directory for the new project. Defaults to current directory.",
+    )
+
+    args = parser.parse_args()
+
+    # ── Load scaffold config ──────────────────────────────────────
+
+    if not SCAFFOLD_CONFIG.exists():
+        print(f"Error: scaffold config not found at {SCAFFOLD_CONFIG}", file=sys.stderr)
+        sys.exit(1)
+
+    config = parse_toml(SCAFFOLD_CONFIG)
+
+    # ── Resolve values ────────────────────────────────────────────
+
+    defaults = config.get("defaults", {})
+    organ = args.organ or defaults.get("organ", "LIMINAL")
+    domain = args.domain or defaults.get("domain", "Generative")
+    target_parent = Path(args.target_dir) if args.target_dir else Path.cwd()
+    project_dir = target_parent / args.project_name
+
+    template_vars = {
+        "project_name": args.project_name,
+        "organ": organ,
+        "domain": domain,
+        "date": date.today().isoformat(),
+        "version": defaults.get("version", "0.1.0"),
+        "schema": defaults.get("schema", "piece/v2"),
+        "scale": str(defaults.get("scale", 0)),
+    }
+
+    # ── Guard: refuse to overwrite ────────────────────────────────
+
+    if project_dir.exists():
+        print(f"Error: {project_dir} already exists. Refusing to overwrite.", file=sys.stderr)
+        sys.exit(1)
+
+    # ── Create directory structure ────────────────────────────────
+
+    dirs_to_create = config.get("directories", {}).get("create", [])
+    print(f"Creating project: {project_dir}")
+    project_dir.mkdir(parents=True)
+
+    for d in dirs_to_create:
+        (project_dir / d).mkdir(parents=True, exist_ok=True)
+        print(f"  mkdir {d}/")
+
+    # ── Copy bin tools ────────────────────────────────────────────
+
+    tools = config.get("tools", {}).get("copy", [])
+    bin_src = MONAD_ROOT / "bin"
+    bin_dst = project_dir / "bin"
+    bin_dst.mkdir(exist_ok=True)
+
+    copied_tools = []
+    for tool_name in tools:
+        src = bin_src / tool_name
+        dst = bin_dst / tool_name
+        if src.exists():
+            shutil.copy2(src, dst)
+            dst.chmod(0o755)
+            copied_tools.append(tool_name)
+            print(f"  cp bin/{tool_name}")
+        else:
+            print(f"  WARN: bin/{tool_name} not found in monad, skipping", file=sys.stderr)
+
+    # ── Copy registry schemas ─────────────────────────────────────
+
+    schemas_config = config.get("schemas", {})
+    schema_files = schemas_config.get("files", [])
+    schemas_src = MONAD_ROOT / schemas_config.get("copy_dir", "registry/schemas")
+    schemas_dst = project_dir / "registry" / "schemas"
+    schemas_dst.mkdir(parents=True, exist_ok=True)
+
+    copied_schemas = []
+    for schema_file in schema_files:
+        src = schemas_src / schema_file
+        dst = schemas_dst / schema_file
+        if src.exists():
+            shutil.copy2(src, dst)
+            copied_schemas.append(schema_file)
+            print(f"  cp registry/schemas/{schema_file}")
+        else:
+            print(f"  WARN: {schema_file} not found in monad schemas, skipping", file=sys.stderr)
+
+    # ── Copy seed atoms ───────────────────────────────────────────
+
+    seeds_config = config.get("seed_atoms", {})
+    seed_files = seeds_config.get("files", [])
+    seeds_src = MONAD_ROOT / seeds_config.get("source_dir", "scales/+1/seed-atoms")
+
+    copied_seeds = []
+    for seed_file in seed_files:
+        src = seeds_src / seed_file
+        dst = project_dir / seed_file
+        if src.exists():
+            shutil.copy2(src, dst)
+            copied_seeds.append(seed_file)
+            print(f"  cp {seed_file}")
+        else:
+            print(f"  WARN: seed atom {seed_file} not found, skipping", file=sys.stderr)
+
+    # ── Render templates ──────────────────────────────────────────
+
+    tmpl_config = config.get("templates", {})
+    tmpl_files = tmpl_config.get("files", [])
+    tmpl_src = MONAD_ROOT / tmpl_config.get("source_dir", "scales/+1/templates")
+
+    rendered = []
+    for tmpl_file in tmpl_files:
+        src = tmpl_src / tmpl_file
+        # Output name: strip .tmpl suffix
+        out_name = tmpl_file.removesuffix(".tmpl")
+        dst = project_dir / out_name
+        if src.exists():
+            content = src.read_text(encoding="utf-8")
+            result = render_template(content, template_vars)
+            dst.write_text(result, encoding="utf-8")
+            rendered.append(out_name)
+            print(f"  render {tmpl_file} -> {out_name}")
+        else:
+            print(f"  WARN: template {tmpl_file} not found, skipping", file=sys.stderr)
+
+    # ── Initialize git ────────────────────────────────────────────
+
+    try:
+        subprocess.run(
+            ["git", "init"],
+            cwd=project_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        print("  git init")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"  WARN: git init failed: {e}", file=sys.stderr)
+
+    # ── Report ────────────────────────────────────────────────────
+
+    print()
+    print("=" * 60)
+    print(f"Project scaffolded: {project_dir}")
+    print(f"  Organ:   {organ}")
+    print(f"  Domain:  {domain}")
+    print(f"  Tools:   {len(copied_tools)} copied")
+    print(f"  Schemas: {len(copied_schemas)} copied")
+    print(f"  Seeds:   {len(copied_seeds)} placed")
+    print(f"  Renders: {len(rendered)} templates applied")
+    print()
+    print("Directories created:")
+    for d in dirs_to_create:
+        print(f"  {d}/")
+    print()
+    print("The system exists. Populate the seed atoms to give it structure.")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()

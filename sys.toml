@@ -1,0 +1,71 @@
+# sys.toml — single source of truth for all system identity, vocabulary, and configuration
+# Read by `piece` CLI and `pieces.zsh`. Everything else derives from here.
+
+[versions]
+manifest      = "0.2.0"
+laws          = "1.0.0"
+atom_registry = "1.1.0"
+
+[schemas]
+piece = "piece/v2"
+law   = "law/v1"
+
+[sop]
+primary   = "SOP-SS-ATM-001_001"
+amendment = "SOP-SS-ATM-001_002"
+
+[layers]
+names = ["distinction", "token", "relation", "rule", "flow", "feedback", "governance"]
+
+[categories]
+S = "Seed"
+F = "Foundation"
+P = "Primitives"
+M = "Materia"
+O = "Objects/Composition"
+G = "Governance"
+V = "Verse/Multiverse"
+
+[domains]
+names = ["Generative", "Foundation", "Primitives", "Materia", "Composition", "Governance", "Multiverse"]
+
+[vocabulary.nature]
+terms = ["FRAMEWORK", "CLAIM", "DEFINITION", "PROOF", "AXIOM", "MODEL", "DISTINCTION", "ALGORITHM", "SCHEMA", "QUESTION", "CONJECTURE", "PROTOCOL", "INSTRUCTION"]
+
+[vocabulary.formalization]
+terms = ["FORMAL", "SKETCHED", "INTUITIVE", "EXCISED", "VACUUM"]
+
+[vocabulary.provenance]
+terms = ["HYBRID", "LOCAL", "ALIEN"]
+
+[vocabulary.seed_type]
+terms = ["DIRECTIVE", "POETIC", "INTERROGATIVE"]
+
+[vocabulary.granularity]
+terms = ["MINIMAL", "COUPLED_SEQUENCE"]
+
+[vocabulary.integration]
+phases = ["1A", "1B", "2A", "2B", "3A", "EXCISED", "VACUUM"]
+
+[vocabulary.prompt_kind]
+terms = ["GENERATIVE", "COMMAND", "FILE_REF"]
+
+[vocabulary.capture_status]
+terms = ["CAPTURED", "UNCAPTURED", "PARTIAL"]
+
+[vocabulary.escrow_state]
+terms = ["PENDING", "RESEARCHING", "CONSULTING", "ADJUDICATED", "REJECTED", "RETURNED"]
+
+[config]
+max_depth      = 10
+graph_fontname = "Helvetica"
+graph_fontsize = 10
+json_indent    = 2
+registry_path  = "registry/data"
+
+[protocol.escrow]
+body_path = "/Users/4jp/Workspace/meta-organvm"
+mind_path = "/Users/4jp/Workspace/organvm-iv-taxis"
+seed_path = "/Users/4jp/sovereign--ground/holds--same/a-organvm"
+timeout_s = 300
+storage   = "archive/escrow"

@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spatiotemporal Cartography</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --anthropic-dark: #141413;
+            --anthropic-light: #faf9f5;
+            --anthropic-mid-gray: #b0aea5;
+            --anthropic-light-gray: #e8e6dc;
+            --anthropic-orange: #d97757;
+            --anthropic-blue: #6a9bcc;
+            --anthropic-green: #788c5d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--anthropic-dark);
+            min-height: 100vh;
+            color: var(--anthropic-light);
+            overflow: hidden;
+        }
+        .layout {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            background: rgba(20, 20, 19, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(176, 174, 165, 0.15);
+            z-index: 10;
+        }
+        .sidebar h1 {
+            font-family: 'Lora', serif;
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .sidebar .subtitle {
+            color: var(--anthropic-mid-gray);
+            font-size: 12px;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+        .section { margin-bottom: 22px; }
+        .section h3 {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section h3::before {
+            content: '\2022';
+            color: var(--anthropic-orange);
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .control-row label {
+            font-size: 12px;
+            color: var(--anthropic-mid-gray);
+            min-width: 90px;
+        }
+        .control-row input[type="range"] {
+            flex: 1;
+            height: 3px;
+            background: rgba(176, 174, 165, 0.3);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .control-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--anthropic-orange);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .val {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--anthropic-mid-gray);
+            min-width: 36px;
+            text-align: right;
+        }
+        .mode-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .mode-btn {
+            background: rgba(176, 174, 165, 0.1);
+            border: 1px solid rgba(176, 174, 165, 0.2);
+            color: var(--anthropic-mid-gray);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-btn:hover { border-color: var(--anthropic-orange); color: var(--anthropic-light); }
+        .mode-btn.active {
+            background: rgba(217, 119, 87, 0.15);
+            border-color: var(--anthropic-orange);
+            color: var(--anthropic-orange);
+        }
+        .commit-info {
+            background: rgba(176, 174, 165, 0.08);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+        }
+        .commit-info .hash {
+            font-family: 'Courier New', monospace;
+            color: var(--anthropic-orange);
+            font-size: 11px;
+        }
+        .commit-info .msg {
+            margin-top: 4px;
+            color: var(--anthropic-light);
+            line-height: 1.4;
+        }
+        .commit-info .stats {
+            margin-top: 6px;
+            color: var(--anthropic-mid-gray);
+            font-size: 11px;
+        }
+        .detail-panel {
+            background: rgba(176, 174, 165, 0.08);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            display: none;
+        }
+        .detail-panel.visible { display: block; }
+        .detail-panel .path {
+            font-family: 'Courier New', monospace;
+            color: var(--anthropic-blue);
+            font-size: 11px;
+            word-break: break-all;
+        }
+        .detail-panel .meta-row {
+            margin-top: 4px;
+            color: var(--anthropic-mid-gray);
+            font-size: 11px;
+        }
+        .detail-panel .meta-row span { color: var(--anthropic-light); }
+        .orphan-tag {
+            display: inline-block;
+            background: rgba(217, 87, 87, 0.2);
+            color: #d95757;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-top: 4px;
+        }
+        .canvas-area {
+            flex: 1;
+            position: relative;
+        }
+        #three-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .time-scrubber {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(20, 20, 19, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(176, 174, 165, 0.15);
+            z-index: 10;
+        }
+        .time-scrubber input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: rgba(176, 174, 165, 0.3);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .time-scrubber input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--anthropic-orange);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .time-label {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--anthropic-mid-gray);
+            min-width: 20px;
+            text-align: center;
+        }
+        .gap-metric {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(20, 20, 19, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(176, 174, 165, 0.15);
+            font-size: 11px;
+            color: var(--anthropic-mid-gray);
+            z-index: 10;
+        }
+        .gap-metric .value {
+            font-family: 'Courier New', monospace;
+            color: var(--anthropic-orange);
+            font-size: 14px;
+        }
+        .sparkline {
+            display: block;
+            margin-top: 4px;
+        }
+        @media (max-width: 700px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; height: 40vh; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <h1>Spatiotemporal Cartography</h1>
+        <div class="subtitle">3D container topology through git time &mdash; actual vs. ideal structure</div>
+
+        <div class="section">
+            <h3>View Mode</h3>
+            <div class="mode-buttons">
+                <button class="mode-btn" data-mode="actual" onclick="setMode('actual')">Actual</button>
+                <button class="mode-btn active" data-mode="gap" onclick="setMode('gap')">Gap View</button>
+                <button class="mode-btn" data-mode="ideal" onclick="setMode('ideal')">Ideal</button>
+                <button class="mode-btn" data-mode="heatmap" onclick="setMode('heatmap')">Heatmap</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Parameters</h3>
+            <div class="control-row">
+                <label>Z Spacing</label>
+                <input type="range" id="zSpacing" min="15" max="60" value="30" oninput="rebuildScene()">
+                <span class="val" id="zSpacing-val">30</span>
+            </div>
+            <div class="control-row">
+                <label>Opacity</label>
+                <input type="range" id="containerOpacity" min="5" max="60" value="25" oninput="updateVisuals()">
+                <span class="val" id="containerOpacity-val">25</span>
+            </div>
+            <div class="control-row">
+                <label>File Size</label>
+                <input type="range" id="fileSize" min="0.3" max="2.0" step="0.1" value="0.8" oninput="updateVisuals()">
+                <span class="val" id="fileSize-val">0.8</span>
+            </div>
+            <div class="control-row">
+                <label>Trace Opacity</label>
+                <input type="range" id="traceOpacity" min="0" max="100" value="40" oninput="updateVisuals()">
+                <span class="val" id="traceOpacity-val">40</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Current Commit</h3>
+            <div class="commit-info" id="commit-info">
+                <div class="hash" id="ci-hash">---</div>
+                <div class="msg" id="ci-msg">Loading...</div>
+                <div class="stats" id="ci-stats"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Selection</h3>
+            <div class="detail-panel" id="detail-panel">
+                <div class="path" id="dp-path"></div>
+                <div class="meta-row">Category: <span id="dp-category">—</span></div>
+                <div class="meta-row">Atoms: <span id="dp-atoms">—</span></div>
+                <div class="meta-row">Container: <span id="dp-container">—</span></div>
+                <div id="dp-orphan"></div>
+            </div>
+            <div id="no-selection" style="font-size:12px; color: var(--anthropic-mid-gray);">Click a file to inspect</div>
+        </div>
+    </div>
+
+    <div class="canvas-area">
+        <canvas id="three-canvas"></canvas>
+        <div class="time-scrubber">
+            <span class="time-label" id="time-idx">0</span>
+            <input type="range" id="timeScrubber" min="0" max="12" value="12" oninput="scrubTime(this.value)">
+            <span class="time-label" id="time-max">12</span>
+        </div>
+        <div class="gap-metric" id="gap-metric">
+            Orphans: <span class="value" id="gap-value">—</span>
+            <svg class="sparkline" id="sparkline" width="120" height="24"></svg>
+        </div>
+    </div>
+</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ═══════════════════════════════════════════════════════════════
+// CATEGORY COLORS
+// ═══════════════════════════════════════════════════════════════
+
+const CAT_COLORS = {
+    S: 0xd97757,  // Seed — orange
+    F: 0x6a9bcc,  // Foundation — blue
+    P: 0x788c5d,  // Primitives — green
+    M: 0xc4a35a,  // Materia — gold
+    O: 0x9b7cc4,  // Objects — purple
+    G: 0xcc6a6a,  // Governance — red
+    V: 0x6ac4b8,  // Verse — teal
+    _: 0x706e65,  // unmapped — gray
+};
+
+const CONTAINER_ROLES = {
+    'axioms':       { color: 0x6a9bcc, label: 'Axioms' },
+    'derivations':  { color: 0x788c5d, label: 'Derivations' },
+    'archive':      { color: 0x706e65, label: 'Archive' },
+    'registry':     { color: 0xc4a35a, label: 'Registry' },
+    'bin':          { color: 0x9b7cc4, label: 'CLI Tools' },
+    'scales':       { color: 0x6ac4b8, label: 'Scales' },
+    'coverage':     { color: 0xcc6a6a, label: 'Coverage' },
+    '_projected':   { color: 0x706e65, label: 'Projected' },
+    '.':            { color: 0x504e47, label: 'Root' },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+
+let snapshots = null, ideal = null;
+let scene, camera, renderer, controls;
+let timeGroups = [];       // Group per commit
+let traceGroup = null;     // Persistence traces
+let ghostGroup = null;     // Ideal ghost topology
+let gapGroup = null;       // Gap lines
+let cursorPlane = null;    // Time cursor
+let fileMeshes = [];       // All file spheres for raycasting
+let currentTime = 12;
+let viewMode = 'gap';
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+async function init() {
+    const [snapRes, idealRes] = await Promise.all([
+        fetch('_data/snapshots.json').then(r => r.json()),
+        fetch('_data/ideal.json').then(r => r.json()),
+    ]);
+    snapshots = snapRes;
+    ideal = idealRes;
+
+    setupThree();
+    buildScene();
+    updateCommitInfo(snapshots.commits.length - 1);
+    buildSparkline();
+
+    document.getElementById('timeScrubber').max = snapshots.commits.length - 1;
+    document.getElementById('timeScrubber').value = snapshots.commits.length - 1;
+    document.getElementById('time-max').textContent = snapshots.commits.length - 1;
+    currentTime = snapshots.commits.length - 1;
+
+    animate();
+}
+
+function setupThree() {
+    const canvas = document.getElementById('three-canvas');
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x141413);
+
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x141413, 0.0018);
+
+    camera = new THREE.PerspectiveCamera(55, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 2000);
+    const totalZ = (snapshots.commits.length - 1) * getZSpacing();
+    camera.position.set(80, 60, totalZ + 80);
+    camera.lookAt(0, 0, totalZ / 2);
+
+    controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.target.set(0, 0, totalZ / 2);
+
+    scene.add(new THREE.AmbientLight(0x404040, 0.8));
+    const dirLight = new THREE.DirectionalLight(0xfaf9f5, 0.6);
+    dirLight.position.set(60, 100, 80);
+    scene.add(dirLight);
+
+    window.addEventListener('resize', () => {
+        const w = canvas.parentElement.clientWidth;
+        const h = canvas.parentElement.clientHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+    });
+
+    // Raycasting for click
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(fileMeshes);
+        if (hits.length > 0) {
+            showDetail(hits[0].object.userData);
+        } else {
+            hideDetail();
+        }
+    });
+}
+
+function getZSpacing() {
+    return parseFloat(document.getElementById('zSpacing').value);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LAYOUT — treemap-style container placement
+// ═══════════════════════════════════════════════════════════════
+
+function computeLayout(commits) {
+    // Use HEAD commit (last) to determine stable layout
+    const head = commits[commits.length - 1];
+    const containerSet = new Map(); // path -> { files: [], depth }
+
+    for (const f of head.files) {
+        const c = f.container;
+        if (!containerSet.has(c)) {
+            containerSet.set(c, { files: [], depth: f.depth > 0 ? c.split('/').length : 0 });
+        }
+        containerSet.get(c).files.push(f.path);
+    }
+
+    // Sort containers: root first, then by name
+    const containers = [...containerSet.entries()].sort((a, b) => {
+        if (a[0] === '.') return -1;
+        if (b[0] === '.') return 1;
+        return a[0].localeCompare(b[0]);
+    });
+
+    // Assign XY positions to containers using a simple grid layout
+    const layout = {};  // containerPath -> { x, y, w, h }
+    const cols = Math.ceil(Math.sqrt(containers.length));
+    const cellW = 22, cellH = 18;
+    const gap = 4;
+
+    containers.forEach(([path, data], idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        layout[path] = {
+            x: (col - cols / 2) * (cellW + gap),
+            y: (row - Math.floor(containers.length / cols) / 2) * (cellH + gap),
+            w: cellW,
+            h: cellH,
+            fileCount: data.files.length,
+            depth: data.depth,
+        };
+    });
+
+    // Assign XY positions to files within their container
+    const fileLayout = {};  // filePath -> { x, y }
+    for (const [cpath, cdata] of containerSet.entries()) {
+        const cl = layout[cpath];
+        if (!cl) continue;
+        const fc = cdata.files.length;
+        const perRow = Math.ceil(Math.sqrt(fc));
+        cdata.files.forEach((fpath, fi) => {
+            const fx = (fi % perRow) - perRow / 2;
+            const fy = Math.floor(fi / perRow) - Math.ceil(fc / perRow) / 2;
+            fileLayout[fpath] = {
+                x: cl.x + fx * 2.2,
+                y: cl.y + fy * 2.2,
+            };
+        });
+    }
+
+    return { containerLayout: layout, fileLayout };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BUILD SCENE
+// ═══════════════════════════════════════════════════════════════
+
+function buildScene() {
+    // Clear existing
+    while (scene.children.length > 2) scene.remove(scene.children[scene.children.length - 1]);
+    timeGroups = [];
+    fileMeshes = [];
+
+    const zSpace = getZSpacing();
+    const { containerLayout, fileLayout } = computeLayout(snapshots.commits);
+
+    // Build per-commit groups
+    snapshots.commits.forEach((commit, ci) => {
+        const group = new THREE.Group();
+        group.position.z = ci * zSpace;
+        group.userData = { index: ci };
+
+        // Containers as translucent boxes
+        const containerPaths = new Set(commit.containers.map(c => c.path));
+        for (const cinfo of commit.containers) {
+            const cl = containerLayout[cinfo.path];
+            if (!cl) continue;
+            const topKey = cinfo.path === '.' ? '.' : cinfo.path.split('/')[0];
+            const role = CONTAINER_ROLES[topKey] || CONTAINER_ROLES['.'];
+            const color = new THREE.Color(role.color);
+
+            const geo = new THREE.BoxGeometry(cl.w, cl.h, 1.5);
+            const mat = new THREE.MeshPhysicalMaterial({
+                color,
+                transparent: true,
+                opacity: 0.12,
+                roughness: 0.9,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(cl.x, cl.y, 0);
+            group.add(mesh);
+
+            // Container wireframe edge
+            const edges = new THREE.EdgesGeometry(geo);
+            const lineMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.3 });
+            const wire = new THREE.LineSegments(edges, lineMat);
+            wire.position.copy(mesh.position);
+            group.add(wire);
+        }
+
+        // Files as spheres
+        for (const file of commit.files) {
+            const fl = fileLayout[file.path];
+            if (!fl) continue;
+
+            const category = getFileCategory(file.path);
+            const isOrphan = ideal.orphans.includes(file.path);
+            const color = isOrphan ? 0xd95757 : (CAT_COLORS[category] || CAT_COLORS._);
+
+            const geo = new THREE.SphereGeometry(0.8, 8, 6);
+            const mat = new THREE.MeshPhysicalMaterial({
+                color,
+                emissive: new THREE.Color(color).multiplyScalar(0.15),
+                roughness: 0.6,
+                metalness: 0.1,
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(fl.x, fl.y, 0);
+            mesh.userData = {
+                path: file.path,
+                container: file.container,
+                depth: file.depth,
+                category,
+                isOrphan,
+                commitIndex: ci,
+            };
+            group.add(mesh);
+            fileMeshes.push(mesh);
+        }
+
+        scene.add(group);
+        timeGroups.push(group);
+    });
+
+    // Persistence traces
+    traceGroup = new THREE.Group();
+    const allPaths = new Set();
+    snapshots.commits.forEach(c => c.files.forEach(f => allPaths.add(f.path)));
+
+    for (const fpath of allPaths) {
+        const points = [];
+        snapshots.commits.forEach((commit, ci) => {
+            const exists = commit.files.some(f => f.path === fpath);
+            if (exists) {
+                const fl = fileLayout[fpath];
+                if (fl) points.push(new THREE.Vector3(fl.x, fl.y, ci * zSpace));
+            }
+        });
+        if (points.length >= 2) {
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const category = getFileCategory(fpath);
+            const isOrphan = ideal.orphans.includes(fpath);
+            const color = isOrphan ? 0xd95757 : (CAT_COLORS[category] || CAT_COLORS._);
+            const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 });
+            traceGroup.add(new THREE.Line(geo, mat));
+        }
+    }
+    scene.add(traceGroup);
+
+    // Ideal ghost topology
+    ghostGroup = new THREE.Group();
+    const headZ = (snapshots.commits.length - 1) * zSpace;
+    for (const ic of ideal.ideal_containers) {
+        const cl = containerLayout[ic.name];
+        if (!cl) continue;
+        const geo = new THREE.BoxGeometry(cl.w + 2, cl.h + 2, snapshots.commits.length * zSpace);
+        const edges = new THREE.EdgesGeometry(geo);
+        const mat = new THREE.LineDashedMaterial({
+            color: 0xb0aea5,
+            transparent: true,
+            opacity: 0.18,
+            dashSize: 2,
+            gapSize: 1.5,
+        });
+        const wire = new THREE.LineSegments(edges, mat);
+        wire.computeLineDistances();
+        wire.position.set(cl.x, cl.y, headZ / 2);
+        ghostGroup.add(wire);
+
+        // Label sprite
+        const label = makeTextSprite(ic.name, 0xb0aea5, 11);
+        label.position.set(cl.x, cl.y + cl.h / 2 + 3, headZ / 2);
+        ghostGroup.add(label);
+    }
+    scene.add(ghostGroup);
+
+    // Gap lines (actual→ideal for orphans at HEAD)
+    gapGroup = new THREE.Group();
+    rebuildGapLines();
+    scene.add(gapGroup);
+
+    // Time cursor plane
+    const cursorGeo = new THREE.PlaneGeometry(200, 200);
+    const cursorMat = new THREE.MeshBasicMaterial({
+        color: 0xd97757,
+        transparent: true,
+        opacity: 0.04,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+    });
+    cursorPlane = new THREE.Mesh(cursorGeo, cursorMat);
+    cursorPlane.rotation.x = Math.PI / 2;
+    cursorPlane.rotation.z = Math.PI / 2;
+    cursorPlane.position.z = currentTime * zSpace;
+    scene.add(cursorPlane);
+
+    updateVisuals();
+    updateSliderVals();
+}
+
+function rebuildGapLines() {
+    while (gapGroup.children.length) gapGroup.remove(gapGroup.children[0]);
+
+    const zSpace = getZSpacing();
+    const { fileLayout, containerLayout } = computeLayout(snapshots.commits);
+    const commit = snapshots.commits[currentTime];
+    if (!commit) return;
+
+    for (const file of commit.files) {
+        const fl = fileLayout[file.path];
+        if (!fl) continue;
+        const isOrphan = ideal.orphans.includes(file.path);
+        if (!isOrphan) continue;
+
+        // Try to find an ideal container for this orphan
+        let targetContainer = guessIdealContainer(file.path);
+        const tcl = containerLayout[targetContainer];
+        if (!tcl || targetContainer === file.container) continue;
+
+        const from = new THREE.Vector3(fl.x, fl.y, currentTime * zSpace);
+        const to = new THREE.Vector3(tcl.x, tcl.y, currentTime * zSpace);
+        const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
+        const mat = new THREE.LineBasicMaterial({ color: 0xd95757, transparent: true, opacity: 0.5 });
+        gapGroup.add(new THREE.Line(geo, mat));
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+function getFileCategory(path) {
+    const mapping = ideal.file_to_piece_mapping[path];
+    if (mapping) return mapping.category;
+    // Infer from directory
+    if (path.startsWith('axioms/')) return 'F';
+    if (path.startsWith('derivations/')) return 'P';
+    if (path.startsWith('archive/')) return '_';
+    if (path.startsWith('registry/')) return '_';
+    if (path.startsWith('bin/')) return '_';
+    if (path.startsWith('scales/')) return 'M';
+    if (path.startsWith('coverage/')) return 'G';
+    return '_';
+}
+
+function guessIdealContainer(path) {
+    // Heuristic: where should this orphan file live?
+    if (path.startsWith('axioms/')) return 'axioms';
+    if (path.startsWith('derivations/')) return 'derivations';
+    if (path.match(/session|export|uncaptured|handoff/i)) return 'archive';
+    if (path.match(/^\d{4}-\d{2}-\d{2}/)) return 'archive';  // date-prefixed root files
+    if (path.endsWith('.md') && !path.includes('/')) return 'archive';  // root-level .md
+    if (path.endsWith('.txt') && !path.includes('/')) return 'archive';  // root-level .txt
+    if (path === 'escrow' || path === 'piece' || path === 'session-export') return 'bin';
+    return '.';
+}
+
+function makeTextSprite(text, color, size) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 64;
+    ctx.font = `${size * 3}px Poppins, sans-serif`;
+    ctx.fillStyle = '#' + new THREE.Color(color).getHexString();
+    ctx.textAlign = 'center';
+    ctx.fillText(text, 128, 40);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.6 });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(16, 4, 1);
+    return sprite;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VISUALS UPDATE
+// ═══════════════════════════════════════════════════════════════
+
+function updateVisuals() {
+    updateSliderVals();
+    const opacity = parseFloat(document.getElementById('containerOpacity').value) / 100;
+    const fSize = parseFloat(document.getElementById('fileSize').value);
+    const traceOp = parseFloat(document.getElementById('traceOpacity').value) / 100;
+
+    // Update file sphere sizes
+    for (const mesh of fileMeshes) {
+        mesh.scale.setScalar(fSize);
+    }
+
+    // Update trace opacity
+    if (traceGroup) {
+        traceGroup.children.forEach(line => {
+            line.material.opacity = traceOp;
+        });
+    }
+
+    // Update container opacity
+    timeGroups.forEach(g => {
+        g.children.forEach(child => {
+            if (child.isMesh && child.geometry.type === 'BoxGeometry') {
+                child.material.opacity = opacity;
+            }
+        });
+    });
+
+    // View mode toggles
+    const showActual = viewMode === 'actual' || viewMode === 'gap' || viewMode === 'heatmap';
+    const showGhost = viewMode === 'ideal' || viewMode === 'gap';
+    const showGap = viewMode === 'gap';
+    const showHeatmap = viewMode === 'heatmap';
+
+    timeGroups.forEach(g => { g.visible = showActual; });
+    if (traceGroup) traceGroup.visible = showActual;
+    if (ghostGroup) ghostGroup.visible = showGhost;
+    if (gapGroup) gapGroup.visible = showGap;
+
+    // Fade future commits
+    const zSpace = getZSpacing();
+    timeGroups.forEach((g, i) => {
+        if (!showActual) return;
+        const isFuture = i > currentTime;
+        g.children.forEach(child => {
+            if (child.material) {
+                child.material.opacity = isFuture
+                    ? (child.material._baseOpacity || child.material.opacity) * 0.15
+                    : (child.material._baseOpacity || child.material.opacity);
+                if (!child.material._baseOpacity) child.material._baseOpacity = child.material.opacity;
+            }
+        });
+    });
+
+    // Heatmap: color containers by orphan density
+    if (showHeatmap) {
+        const commit = snapshots.commits[currentTime];
+        if (commit) {
+            const orphanCounts = {};
+            commit.files.forEach(f => {
+                if (ideal.orphans.includes(f.path)) {
+                    orphanCounts[f.container] = (orphanCounts[f.container] || 0) + 1;
+                }
+            });
+            const maxOrphans = Math.max(1, ...Object.values(orphanCounts));
+            timeGroups[currentTime]?.children.forEach(child => {
+                if (child.isMesh && child.geometry.type === 'BoxGeometry') {
+                    // Find which container this is by position matching
+                    // Heat from green (0) to red (max)
+                }
+            });
+        }
+    }
+}
+
+function updateSliderVals() {
+    ['zSpacing', 'containerOpacity', 'fileSize', 'traceOpacity'].forEach(id => {
+        const el = document.getElementById(id);
+        const valEl = document.getElementById(id + '-val');
+        if (el && valEl) valEl.textContent = el.value;
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TIME SCRUBBER
+// ═══════════════════════════════════════════════════════════════
+
+function updateCommitInfo(idx) {
+    const commit = snapshots.commits[idx];
+    if (!commit) return;
+    document.getElementById('ci-hash').textContent = commit.hash;
+    document.getElementById('ci-msg').textContent = commit.message;
+    const orphanCount = commit.files.filter(f => ideal.orphans.includes(f.path)).length;
+    document.getElementById('ci-stats').textContent =
+        `${commit.files.length} files · ${commit.containers.length} containers · ${orphanCount} orphans`;
+    document.getElementById('gap-value').textContent = orphanCount;
+}
+
+function buildSparkline() {
+    const svg = document.getElementById('sparkline');
+    const data = snapshots.commits.map(c =>
+        c.files.filter(f => ideal.orphans.includes(f.path)).length
+    );
+    const maxVal = Math.max(1, ...data);
+    const w = 120, h = 24;
+    const step = w / (data.length - 1 || 1);
+    const points = data.map((v, i) => `${i * step},${h - (v / maxVal) * (h - 2)}`).join(' ');
+    svg.innerHTML = `<polyline points="${points}" fill="none" stroke="#d97757" stroke-width="1.5" opacity="0.7"/>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DETAIL PANEL
+// ═══════════════════════════════════════════════════════════════
+
+function showDetail(data) {
+    const panel = document.getElementById('detail-panel');
+    const noSel = document.getElementById('no-selection');
+    panel.classList.add('visible');
+    noSel.style.display = 'none';
+
+    document.getElementById('dp-path').textContent = data.path;
+    document.getElementById('dp-container').textContent = data.container;
+
+    const mapping = ideal.file_to_piece_mapping[data.path];
+    if (mapping) {
+        const catName = ideal.categories[mapping.category] || mapping.category;
+        document.getElementById('dp-category').textContent = `${mapping.category} (${catName})`;
+        document.getElementById('dp-atoms').textContent = mapping.atoms.join(', ') || '—';
+    } else {
+        document.getElementById('dp-category').textContent = data.category || '—';
+        document.getElementById('dp-atoms').textContent = '—';
+    }
+
+    const orphanEl = document.getElementById('dp-orphan');
+    if (data.isOrphan) {
+        const target = guessIdealContainer(data.path);
+        orphanEl.innerHTML = `<span class="orphan-tag">ORPHAN</span> <span style="font-size:11px;color:var(--anthropic-mid-gray)">→ ideal: ${target}</span>`;
+    } else {
+        orphanEl.innerHTML = '';
+    }
+}
+
+function hideDetail() {
+    document.getElementById('detail-panel').classList.remove('visible');
+    document.getElementById('no-selection').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ANIMATION
+// ═══════════════════════════════════════════════════════════════
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+
+    // Gentle file breathing
+    const t = performance.now() * 0.001;
+    fileMeshes.forEach((m, i) => {
+        const base = parseFloat(document.getElementById('fileSize').value);
+        const breath = 1 + Math.sin(t * 0.8 + i * 0.3) * 0.06;
+        m.scale.setScalar(base * breath);
+    });
+
+    renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GLOBAL HANDLERS (attached to window for inline HTML events)
+// ═══════════════════════════════════════════════════════════════
+
+window.setMode = function(mode) {
+    viewMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    updateVisuals();
+};
+
+window.scrubTime = function(val) {
+    currentTime = parseInt(val);
+    document.getElementById('time-idx').textContent = currentTime;
+    const zSpace = getZSpacing();
+    if (cursorPlane) cursorPlane.position.z = currentTime * zSpace;
+    updateCommitInfo(currentTime);
+    rebuildGapLines();
+    updateVisuals();
+};
+
+window.rebuildScene = function() {
+    buildScene();
+    const totalZ = (snapshots.commits.length - 1) * getZSpacing();
+    controls.target.set(0, 0, totalZ / 2);
+};
+
+window.updateVisuals = updateVisuals;
+
+// ═══════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════
+
+init().catch(err => {
+    console.error('Failed to initialize:', err);
+    document.getElementById('ci-msg').textContent = 'Error loading data. Run bin/sys-visualize first.';
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,520 @@
+#!/usr/bin/env python3
+"""session-export — extract prompt chains and uncaptured language from session transcripts.
+
+Each chat session produces two artifacts:
+  1. Prompt chain (.prompts.md) — user prompts in linear generative order
+  2. Uncaptured language (.uncaptured.md) — Claude output not written to files
+
+Usage:
+    session-export <session.txt>              Both outputs
+    session-export --prompts <session.txt>    Prompt chain only
+    session-export --uncaptured <session.txt> Uncaptured language only
+    session-export --all                      Process all .txt in archive/sessions/
+    session-export --dry-run <session.txt>    Print to stdout, don't write files
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+
+
+# ─── Data structures ───────────────────────────────────────────
+
+@dataclass
+class Prompt:
+    index: int           # 1-based ordinal among generative prompts
+    text: str            # exact user text, multiline joined
+    line_number: int     # line in source file (1-based)
+    kind: str            # GENERATIVE | COMMAND | FILE_REF
+
+
+@dataclass
+class ResponseBlock:
+    text: str            # full Claude response, tool indicators stripped
+    line_number: int
+    wrote_files: list[str] = field(default_factory=list)
+    prompt_index: int = 0  # which generative prompt this responds to
+
+
+@dataclass
+class Session:
+    source_file: str
+    timestamp: str
+    prompts: list[Prompt] = field(default_factory=list)
+    responses: list[ResponseBlock] = field(default_factory=list)
+    commands: list[str] = field(default_factory=list)  # /clear, /copy, etc.
+    copy_count: int = 0
+
+
+# ─── Constants ─────────────────────────────────────────────────
+
+BANNER_END_RE = re.compile(r"^╰")
+PROMPT_RE = re.compile(r"^❯ (.*)$")
+RESPONSE_RE = re.compile(r"^⏺")
+TIMING_RE = re.compile(r"^✻ (Cooked|Churned|Crunched|Brewed|Sautéed|Worked) for")
+WROTE_RE = re.compile(r"Wrote (\d+) lines? to (.+)$")
+
+# Tool indicator lines (not content)
+TOOL_INDICATORS = [
+    "Recalled ",
+    "Read ",
+    "Searched for ",
+    "Updated plan",
+    "Improved ",
+    "Wrote ",
+    "Created ",
+    "Edited ",
+    "  ⎿  ",
+]
+
+COMMANDS = {"/clear", "/copy", "/export", "/plan", "/init", "/help", "/fast"}
+
+
+def is_tool_indicator(line: str) -> bool:
+    stripped = line.strip()
+    return any(stripped.startswith(ind) or stripped.startswith("⎿") for ind in TOOL_INDICATORS)
+
+
+def is_command(text: str) -> bool:
+    first_word = text.split()[0] if text.split() else ""
+    return first_word in COMMANDS
+
+
+def is_file_ref(text: str) -> bool:
+    return text.startswith("/") or text.startswith("~")
+
+
+# ─── Parser ────────────────────────────────────────────────────
+
+def parse_session(filepath: str | Path) -> Session:
+    """Parse a raw Claude Code terminal export into structured data."""
+    filepath = Path(filepath)
+    lines = filepath.read_text(encoding="utf-8", errors="replace").splitlines()
+
+    # Extract timestamp from filename or parent directory
+    stem = filepath.stem
+    ts_match = re.search(r"(\d{4}-\d{2}-\d{2}-\d{6})", stem)
+    if ts_match:
+        timestamp = ts_match.group(1)
+    else:
+        # Try parent directory name (e.g., archive/sessions/2026-04-04/session-export-1.txt)
+        parent_match = re.search(r"(\d{4}-\d{2}-\d{2})", filepath.parent.name)
+        timestamp = f"{parent_match.group(1)}--{stem}" if parent_match else stem
+
+    session = Session(
+        source_file=filepath.name,
+        timestamp=timestamp,
+    )
+
+    # Skip welcome banner (find the ╰ closing line)
+    start = 0
+    for i, line in enumerate(lines):
+        if BANNER_END_RE.match(line):
+            start = i + 1
+            break
+
+    # State machine
+    state = "IDLE"
+    current_prompt_lines: list[str] = []
+    current_prompt_line_number = 0
+    current_response_lines: list[str] = []
+    current_response_line_number = 0
+    current_wrote_files: list[str] = []
+    generative_index = 0
+    last_generative_index = 0
+
+    def flush_prompt():
+        nonlocal current_prompt_lines, generative_index, last_generative_index
+        if not current_prompt_lines:
+            return
+        text = " ".join(line.strip() for line in current_prompt_lines).strip()
+        if not text:
+            current_prompt_lines = []
+            return
+
+        if is_command(text):
+            kind = "COMMAND"
+            idx = 0
+            session.commands.append(text.split()[0])
+            if text.startswith("/copy"):
+                session.copy_count += 1
+        elif is_file_ref(text):
+            kind = "FILE_REF"
+            generative_index += 1
+            idx = generative_index
+            last_generative_index = idx
+        else:
+            kind = "GENERATIVE"
+            generative_index += 1
+            idx = generative_index
+            last_generative_index = idx
+
+        session.prompts.append(Prompt(
+            index=idx,
+            text=text,
+            line_number=current_prompt_line_number,
+            kind=kind,
+        ))
+        current_prompt_lines = []
+
+    def flush_response():
+        nonlocal current_response_lines, current_wrote_files
+        if not current_response_lines:
+            current_wrote_files = []
+            return
+        # Strip tool indicators from response text
+        content_lines = []
+        for rline in current_response_lines:
+            if not is_tool_indicator(rline) and not TIMING_RE.match(rline):
+                content_lines.append(rline)
+        text = "\n".join(content_lines).strip()
+        if text:
+            session.responses.append(ResponseBlock(
+                text=text,
+                line_number=current_response_line_number,
+                wrote_files=list(current_wrote_files),
+                prompt_index=last_generative_index,
+            ))
+        current_response_lines = []
+        current_wrote_files = []
+
+    for i in range(start, len(lines)):
+        line = lines[i]
+
+        prompt_match = PROMPT_RE.match(line)
+
+        if prompt_match:
+            # New prompt — flush any pending state
+            if state == "IN_PROMPT":
+                flush_prompt()
+            elif state == "IN_RESPONSE":
+                flush_response()
+
+            state = "IN_PROMPT"
+            current_prompt_lines = [prompt_match.group(1)]
+            current_prompt_line_number = i + 1  # 1-based
+
+        elif RESPONSE_RE.match(line):
+            if state == "IN_PROMPT":
+                flush_prompt()
+            elif state == "IN_RESPONSE":
+                # Multiple ⏺ blocks in sequence — flush previous
+                flush_response()
+
+            state = "IN_RESPONSE"
+            # Strip the ⏺ marker and leading space
+            content = re.sub(r"^⏺\s*", "", line)
+            current_response_lines = [content] if content else []
+            current_response_line_number = i + 1
+            current_wrote_files = []
+
+        elif TIMING_RE.match(line):
+            if state == "IN_RESPONSE":
+                flush_response()
+            elif state == "IN_PROMPT":
+                flush_prompt()
+            state = "IDLE"
+
+        elif state == "IN_PROMPT":
+            # Continuation line of a multi-line prompt
+            # These do NOT start with ⏺, ❯, ✻, or tool indicators
+            stripped = line.strip()
+            if stripped and not is_tool_indicator(line):
+                current_prompt_lines.append(stripped)
+            elif not stripped:
+                # Empty line after prompt → end of prompt
+                flush_prompt()
+                state = "IDLE"
+            else:
+                # Tool indicator after prompt (e.g., "Recalled N memories")
+                flush_prompt()
+                state = "IDLE"
+
+        elif state == "IN_RESPONSE":
+            # Check for Wrote indicators
+            wrote_match = WROTE_RE.search(line)
+            if wrote_match:
+                current_wrote_files.append(wrote_match.group(2).strip())
+            # Accumulate response content (including tool indicators for context)
+            current_response_lines.append(line)
+
+        # IDLE state — skip blank lines, tool indicators, etc.
+
+    # Flush any remaining state
+    if state == "IN_PROMPT":
+        flush_prompt()
+    elif state == "IN_RESPONSE":
+        flush_response()
+
+    return session
+
+
+# ─── Emitters ──────────────────────────────────────────────────
+
+def emit_prompt_chain(session: Session) -> str:
+    """Generate the prompt chain markdown."""
+    date = session.timestamp[:10] if len(session.timestamp) >= 10 else session.timestamp
+    gen_prompts = [p for p in session.prompts if p.kind != "COMMAND"]
+    gen_count = len(gen_prompts)
+
+    lines = [
+        "---",
+        f'source: "{session.source_file}"',
+        f'session_date: "{date}"',
+        f"prompt_count: {gen_count}",
+        "---",
+        "",
+        f"# Prompt Chain: {session.timestamp}",
+        "",
+    ]
+
+    for p in gen_prompts:
+        if p.kind == "FILE_REF":
+            lines.append(f"{p.index}. *[file: {p.text}]*")
+        else:
+            lines.append(f"{p.index}. {p.text}")
+        lines.append("")
+
+    # Commands footer
+    if session.commands:
+        unique_cmds = []
+        cmd_counts: dict[str, int] = {}
+        for c in session.commands:
+            cmd_counts[c] = cmd_counts.get(c, 0) + 1
+        cmd_parts = []
+        for cmd, count in cmd_counts.items():
+            if count > 1:
+                cmd_parts.append(f"{cmd} (x{count})")
+            else:
+                cmd_parts.append(cmd)
+        lines.append("---")
+        lines.append(f"*Commands: {', '.join(cmd_parts)}*")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+@dataclass
+class Turn:
+    """A consolidated turn: all response blocks for one prompt, split by capture status."""
+    prompt_index: int
+    uncaptured_text: str       # merged uncaptured content
+    wrote_files: list[str]     # files written during this turn
+    has_uncaptured: bool = False
+
+
+def consolidate_turns(session: Session) -> list[Turn]:
+    """Merge consecutive response blocks sharing a prompt_index into turns."""
+    if not session.responses:
+        return []
+
+    turns: list[Turn] = []
+    current_idx = session.responses[0].prompt_index
+    uncaptured_parts: list[str] = []
+    wrote: list[str] = []
+
+    def flush():
+        text = "\n\n".join(p for p in uncaptured_parts if p.strip())
+        turns.append(Turn(
+            prompt_index=current_idx,
+            uncaptured_text=text,
+            wrote_files=list(wrote),
+            has_uncaptured=bool(text.strip()),
+        ))
+
+    for r in session.responses:
+        if r.prompt_index != current_idx:
+            flush()
+            current_idx = r.prompt_index
+            uncaptured_parts = []
+            wrote = []
+
+        if r.wrote_files:
+            wrote.extend(r.wrote_files)
+        else:
+            # Only keep substantial blocks (>50 chars), skip tool chatter
+            if len(r.text.strip()) > 50:
+                uncaptured_parts.append(r.text)
+
+        # Even in write-bearing blocks, there may be uncaptured prose
+        # but the write indicator means the primary content was captured
+
+    flush()
+    return turns
+
+
+def emit_uncaptured(session: Session) -> str:
+    """Generate the uncaptured language markdown."""
+    date = session.timestamp[:10] if len(session.timestamp) >= 10 else session.timestamp
+    turns = consolidate_turns(session)
+
+    # Collect all captured file paths
+    all_captured: list[str] = []
+    for t in turns:
+        all_captured.extend(t.wrote_files)
+
+    uncaptured_turns = [t for t in turns if t.has_uncaptured]
+
+    lines = [
+        "---",
+        f'source: "{session.source_file}"',
+        f'session_date: "{date}"',
+        f"uncaptured_turns: {len(uncaptured_turns)}",
+    ]
+    if all_captured:
+        lines.append("captured_files:")
+        for f in all_captured:
+            lines.append(f'  - "{f}"')
+    lines.append("---")
+    lines.append("")
+    lines.append(f"# Uncaptured Language: {session.timestamp}")
+    lines.append("")
+
+    # Find prompt text for a given prompt_index
+    def prompt_text_for(idx: int) -> str:
+        for p in session.prompts:
+            if p.index == idx and p.kind in ("GENERATIVE", "FILE_REF"):
+                text = p.text
+                if len(text) > 80:
+                    text = text[:77] + "..."
+                return text
+        return "(no prompt)"
+
+    block_num = 0
+    for t in uncaptured_turns:
+        block_num += 1
+        prompt_preview = prompt_text_for(t.prompt_index)
+        lines.append(f'## {block_num}. → "{prompt_preview}"')
+        lines.append("")
+        lines.append(t.uncaptured_text)
+        lines.append("")
+        if t.wrote_files:
+            lines.append(f"*Partially captured: {', '.join(f'`{f}`' for f in t.wrote_files)}*")
+            lines.append("")
+        lines.append("---")
+        lines.append("")
+
+    # Note /copy usage
+    if session.copy_count:
+        lines.append(
+            f"*Note: /copy used {session.copy_count} time{'s' if session.copy_count > 1 else ''}"
+            " — content may have been captured via clipboard*"
+        )
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+# ─── File discovery ────────────────────────────────────────────
+
+def find_sessions(root: Path) -> list[Path]:
+    """Find all .txt session files under archive/sessions/."""
+    sessions_dir = root / "archive" / "sessions"
+    if not sessions_dir.exists():
+        return []
+    results = []
+    for p in sorted(sessions_dir.rglob("*.txt")):
+        results.append(p)
+    return results
+
+
+def output_path(source: Path, suffix: str) -> Path:
+    """Generate output path: same directory, .prompts.md or .uncaptured.md."""
+    return source.with_suffix(f".{suffix}.md")
+
+
+# ─── CLI ───────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Extract prompt chains and uncaptured language from session transcripts.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
+    )
+    parser.add_argument("session", nargs="?", help="Path to session .txt file")
+    parser.add_argument("--prompts", action="store_true", help="Emit prompt chain only")
+    parser.add_argument("--uncaptured", action="store_true", help="Emit uncaptured language only")
+    parser.add_argument("--all", action="store_true", help="Process all .txt files in archive/sessions/")
+    parser.add_argument("--dry-run", action="store_true", help="Print to stdout instead of writing files")
+    parser.add_argument("--json", action="store_true", help="Output parse results as JSON")
+
+    args = parser.parse_args()
+
+    # Determine root directory
+    root = Path(os.environ.get("SYS_MANIFEST", "./manifest.toml")).parent
+    if not (root / "manifest.toml").exists():
+        root = Path(".")
+
+    # Determine which mode(s) to emit
+    emit_both = not args.prompts and not args.uncaptured
+
+    if args.all:
+        files = find_sessions(root)
+        if not files:
+            print("No session files found in archive/sessions/", file=sys.stderr)
+            sys.exit(1)
+    elif args.session:
+        files = [Path(args.session)]
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+    for filepath in files:
+        if not filepath.exists():
+            print(f"error: {filepath} not found", file=sys.stderr)
+            continue
+
+        session = parse_session(filepath)
+
+        if args.json:
+            import json
+            data = {
+                "source": session.source_file,
+                "timestamp": session.timestamp,
+                "prompts": [
+                    {"index": p.index, "text": p.text, "kind": p.kind, "line": p.line_number}
+                    for p in session.prompts
+                ],
+                "responses": [
+                    {
+                        "prompt_index": r.prompt_index,
+                        "wrote_files": r.wrote_files,
+                        "line": r.line_number,
+                        "text_length": len(r.text),
+                    }
+                    for r in session.responses
+                ],
+                "commands": session.commands,
+                "copy_count": session.copy_count,
+            }
+            print(json.dumps(data, indent=2))
+            continue
+
+        if args.prompts or emit_both:
+            content = emit_prompt_chain(session)
+            if args.dry_run:
+                print(f"═══ {filepath.name} → prompts ═══")
+                print(content)
+            else:
+                out = output_path(filepath, "prompts")
+                out.write_text(content, encoding="utf-8")
+                print(f"  {out.name}")
+
+        if args.uncaptured or emit_both:
+            content = emit_uncaptured(session)
+            if args.dry_run:
+                print(f"═══ {filepath.name} → uncaptured ═══")
+                print(content)
+            else:
+                out = output_path(filepath, "uncaptured")
+                out.write_text(content, encoding="utf-8")
+                print(f"  {out.name}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,104 @@
+# frontmatter.schema.yaml — canonical schema for atom-bearing document frontmatter
+# Every .md at root must conform to this schema.
+# Vocabulary terms sourced from sys.toml.
+
+required:
+  - uid
+  - name
+  - entity_uid
+  - nature
+  - category
+  - layer
+  - domain
+  - provenance
+  - formalization
+  - lifecycle
+  - integration
+  - state
+  - version
+  - atoms
+
+properties:
+
+  # ── Identity ──────────────────────────────────────────────────
+  uid:
+    type: string
+    pattern: "^DOC-[SFPMOGV]-\\d{2}$"
+    description: "Document UID — stable across moves"
+
+  name:
+    type: string
+    pattern: "^[a-z][a-z0-9]*--[a-z][a-z0-9-]*$"
+    description: "kind--differentia canonical name"
+
+  entity_uid:
+    type: [string, "null"]
+    pattern: "^ent_[A-F0-9]{5}$"
+    description: "Registry entity reference. VACUUM if unregistered."
+
+  # ── Classification ────────────────────────────────────────────
+  nature:
+    type: string
+    enum: [FRAMEWORK, CLAIM, DEFINITION, PROOF, AXIOM, MODEL, DISTINCTION, ALGORITHM, SCHEMA, QUESTION, CONJECTURE, PROTOCOL, INSTRUCTION]
+
+  category:
+    type: string
+    enum: [S, F, P, M, O, G, V]
+
+  layer:
+    type: [integer, string]
+    description: "0-6 or 'meta'. meta = atoms that define classification axes."
+
+  domain:
+    type: string
+    enum: [Generative, Foundation, Primitives, Materia, Composition, Governance, Multiverse]
+
+  provenance:
+    type: string
+    enum: [LOCAL, HYBRID, ALIEN]
+
+  # ── Lifecycle ─────────────────────────────────────────────────
+  formalization:
+    type: string
+    enum: [FORMAL, SKETCHED, INTUITIVE, EXCISED, VACUUM]
+
+  lifecycle:
+    type: string
+    enum: [theory, formal, implementable, testable, improvable]
+    description: "Pipeline stage. Monotonically advances unless EXCISED."
+
+  integration:
+    type: string
+    enum: ["1A", "1B", "2A", "2B", "3A", EXCISED, VACUUM]
+
+  state:
+    type: string
+    enum: [active, superseded, archived, excised]
+
+  # ── Versioning (non-destructive iteration) ────────────────────
+  version:
+    type: integer
+    minimum: 1
+    description: "Monotonic increment. Starts at 1."
+
+  supersedes:
+    type: [string, "null"]
+    description: "UID of previous version. null if original."
+
+  superseded_by:
+    type: [string, "null"]
+    description: "UID of successor. null if current."
+
+  # ── Process classification ────────────────────────────────────
+  process_type:
+    type: [string, "null"]
+    enum: [research, governance, automation, distribution, null]
+    description: "The recurring motion this document participates in."
+
+  # ── Atom manifest ─────────────────────────────────────────────
+  atoms:
+    type: array
+    items:
+      type: string
+      pattern: "^ATM-[SFPMOGV]-\\d{3}[a-z]?$"
+    description: "Inline atom listing — conceptual units within this document."

@@ -1,0 +1,75 @@
+# {{project_name}}
+
+A system built on the monad architecture from `system-system--system`.
+
+## Structure
+
+```
+sys.toml                 System identity, versions, vocabulary (single source of truth)
+manifest.toml            The system instantiated at sigma=0 (piece/v2 schema)
+atom-registry.yaml       Computed atom index across all documents
+
+bin/                     CLI tools for system observation and mutation
+registry/
+  data/                  Entity, relationship, event, and metric JSON records
+  schemas/               JSON Schema definitions for all registry types
+scales/
+  -1/                    Sub-system decomposition (sigma-1)
+  +1/                    Meta-level: this system as a piece within a larger system
+archive/                 Historical material
+coverage/                Generated reports
+```
+
+## Monad Architecture
+
+This project was scaffolded by the system-system--system emitter. It inherits:
+
+1. **Law 1 (System Existence)** -- `H(S) < sum H(e_i)` iff S is a system.
+   The whole has less entropy than the sum of its parts. The deficit IS the structure.
+
+2. **Law 2 (Well-Founded Composition)** -- Every system object admits a unique
+   ordered tree via `(sigma, contains, precedes)`.
+
+3. **Law 3 (Primitive Stratification)** -- 7 layers, strict nesting,
+   cone of contingency.
+
+4. **Law 4 (Scale Invariance)** -- Same schema at every sigma.
+   The manifest is a fixed point.
+
+## Seed Documents
+
+The project starts with four seed atoms covering the four recurring motions:
+
+| Document | Process | Nature |
+|----------|---------|--------|
+| `research--seed.md` | research | FRAMEWORK |
+| `governance--seed.md` | governance | PROTOCOL |
+| `automation--seed.md` | automation | ALGORITHM |
+| `distribution--seed.md` | distribution | PROTOCOL |
+
+## Usage
+
+```bash
+# Check system pulse
+bin/sys-check-pulse
+
+# Generate a deterministic UID
+bin/sys-uid ent "genesis-payload-string"
+
+# Log an event to the ledger
+bin/sys-log-event --type ENTITY_CREATED --targets ent_XXXXX
+
+# Register a heartbeat locus
+bin/sys-heartbeat --uid ent_XXXXX --locus-type formal --uri "path/to/file"
+
+# Enrich frontmatter from atom registry
+bin/sys-enrich-frontmatter
+```
+
+## Organ
+
+{{organ}}
+
+## Domain
+
+{{domain}}

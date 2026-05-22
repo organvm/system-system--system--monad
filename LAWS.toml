@@ -1,0 +1,80 @@
+# LAWS.toml — the logic-bound truths from which this system derives
+# Schema: law/v1
+# These are proven, falsifiable, unbreakable. Everything else follows.
+
+[meta]
+# Validated by `piece --validate` against sys.toml
+schema  = "law/v1"
+version = "1.0.0"
+count   = 4
+status  = "proven"
+
+# ─── Law 1: System Existence ──────────────────────────────────────
+
+[laws.system--existence]
+statement    = "H(S) < Σ H(e_i) ⟺ S is a system"
+formal       = "ΔS = Σ H(e_i) - H(S) > 0"
+proof_method = "subadditivity of Shannon entropy (chain rule + conditioning reduces entropy)"
+source       = "system--existence.md"
+falsifiable  = true
+quantitative = true
+implications = [
+    "ΔS = 0 → mere collection, no system",
+    "ΔS > 0 → system (elements constrain each other)",
+    "ΔS → H_max → deterministic machine",
+    "The deficit IS the structure",
+    "Boundary derived, not assumed: partition maximizing ΔS defines the system",
+]
+
+# ─── Law 2: Well-Founded Composition ──────────────────────────────
+
+[laws.composition--well-founded]
+statement    = "Every system object admits a unique ordered tree decomposition"
+formal       = "T(O) = (O, ◁, ≺) where ◁ is well-founded and ≺ totally orders siblings"
+proof_method = "σ strictly decreasing along ◁-chains (well-foundedness) + finite grounding + total sibling order"
+source       = "composition--well-founded.md"
+falsifiable  = true
+quantitative = false
+axioms       = [
+    "A1: Scale Stratification — A ◁ B → σ(A) < σ(B)",
+    "A2: Transitive Composition — (A ◁ B ∧ B ◁ C) → A ◁ C",
+    "A3: Finite Grounding — every ◁-chain terminates at primitives",
+    "A4: Sequencing Within Composition — siblings are totally ordered",
+    "A5: Nesting Closure — any object may be child, sibling, and parent simultaneously",
+]
+
+# ─── Law 3: Primitive Stratification ──────────────────────────────
+
+[laws.stratification--primitives]
+statement    = "System primitives stratify as 7 layers in strict nesting order, forming a cone of contingency"
+formal       = "L = {distinction, token, relation, rule, flow, feedback, governance}; L[i] presupposes L[0..i-1]"
+proof_method = "constructive (each layer demonstrated to require all below) + universality audit"
+source       = "stratification--primitives.md"
+falsifiable  = true
+quantitative = false
+layers       = [
+    { name = "distinction", layer = 0, universality = "ontological" },
+    { name = "token",       layer = 1, universality = "ontological" },
+    { name = "relation",    layer = 2, universality = "ontological" },
+    { name = "rule",        layer = 3, universality = "structural" },
+    { name = "flow",        layer = 4, universality = "structural" },
+    { name = "feedback",    layer = 5, universality = "architectural" },
+    { name = "governance",  layer = 6, universality = "architectural" },
+]
+cone_of_contingency = "0-2 universal (every system), 3-4 conditional (regularity + time), 5-6 domain-dependent (self-reference + self-modification)"
+
+# ─── Law 4: Scale Invariance (Fixed Point) ────────────────────────
+
+[laws.scale--invariance]
+statement    = "The manifest schema is a fixed point: identical structure at every σ"
+formal       = "∀ piece P: composition.type = 'system' → P decomposes to full manifest at σ-1"
+proof_method = "operational (demonstrated by scales/-1 and scales/+1 manifests using identical piece/v2 schema)"
+source       = "scale--invariance.md"
+falsifiable  = true
+quantitative = false
+implications = [
+    "No privileged level — the primitive is a pattern, not a thing",
+    "Programs nest across scales",
+    "Observation is always peer-to-peer (no view from nowhere)",
+    "The compiler problem is self-similar (materia compiles itself)",
+]

@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import sys
+import os
+import json
+import hashlib
+import argparse
+
+root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+registry_path = os.path.join(root, "registry", "data")
+
+def main():
+    parser = argparse.ArgumentParser(description="Tripartite Convergence - Register an entity heartbeat")
+    parser.add_argument("--uid", required=True, help="Embryonic UID to append to, or canonical name.")
+    parser.add_argument("--locus-type", required=True, choices=["formal", "operational", "governance"], help="The locus heartbeat dimension.")
+    parser.add_argument("--uri", required=True, help="The URI/Path pulse demonstrating physical/logical existence.")
+    
+    args = parser.parse_args()
+    
+    target_file = os.path.join(registry_path, f"{args.uid}.json")
+    if not os.path.exists(target_file):
+        print(f"Error: Target {args.uid} not found in registry.")
+        sys.exit(1)
+        
+    with open(target_file, "r") as f:
+        try:
+            ent = json.load(f)
+        except Exception:
+            print("Failed to decode JSON from entity.")
+            sys.exit(1)
+        
+    if "heartbeats" not in ent:
+        ent["heartbeats"] = {}
+        
+    ent["heartbeats"][f"{args.locus_type}_locus"] = args.uri
+    
+    with open(target_file, "w") as f:
+        json.dump(ent, f, indent=2)
+        
+    print(f"[{args.locus_type.upper()} HEARTBEAT REGISTERED]")
+    print(f"  Pulse Array Node: {args.uri}")
+    
+    hb = ent["heartbeats"]
+    if "formal_locus" in hb and "operational_locus" in hb and "governance_locus" in hb:
+        # Tripartite assembly derivation
+        combined = f"{hb['formal_locus']}|{hb['operational_locus']}|{hb['governance_locus']}"
+        h = hashlib.sha256(combined.encode()).hexdigest()[:5]
+        assembly_id = f"ent_{h.upper()}"
+        print("\n====== TRIPARTITE CONVERGENCE ACHIEVED ======")
+        print(f"» Minimum Threshold: Three taps at the door.")
+        print(f"» Converged True Identity Assembled: {assembly_id}")
+        print("The entity has transitioned from an embryonic state into full dimensional existence.")
+
+if __name__ == "__main__":
+    main()

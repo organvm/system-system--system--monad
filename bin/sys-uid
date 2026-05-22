@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+
+import argparse
+import hashlib
+import sys
+
+def generate_uid(prefix: str, genesis_payload: str, length: int = 5) -> str:
+    """Generate a deterministic UID by hashing the genesis payload."""
+    # Create SHA-256 hash of the genesis payload
+    h = hashlib.sha256(genesis_payload.encode('utf-8')).hexdigest().upper()
+    # Ensure there are no confusing characters (optional, but good practice for humans)
+    # However, to maintain pure math derivation, we just use the raw hex output
+    hash_str = h[:length]
+    return f"{prefix}_{hash_str}"
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate a deterministic unique identifier based on a genesis payload.")
+    parser.add_argument("prefix", choices=['ent', 'met', 'rel', 'evt'], help="The entity prefix to use.")
+    parser.add_argument("genesis", help="The immutable initialization payload (JSON string, file content, or metadata string).")
+    parser.add_argument("-l", "--length", type=int, default=5, help="Length of the hash suffix.")
+    
+    args = parser.parse_args()
+    
+    print(generate_uid(args.prefix, args.genesis, args.length))
+
+if __name__ == "__main__":
+    main()

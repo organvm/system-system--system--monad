@@ -1,0 +1,98 @@
+# scaffold.toml — emitter configuration for the monad
+# Defines what "a project" IS and how system-system--system spawns new instances.
+# Read by bin/sys-scaffold. Everything else derives from here.
+
+[meta]
+schema    = "scaffold/v1"
+version   = "0.1.0"
+emitter   = "system-system--system"
+scale     = 1
+invariant = "Same schema at every sigma. The child is the parent at sigma-1."
+
+# ── Tools to copy into every new project ──────────────────────────
+# These are the operational heartbeat — without them a project cannot
+# observe itself, generate identity, or record its own existence.
+
+[tools]
+copy = [
+    "sys-check-pulse",
+    "sys-heartbeat",
+    "sys-log-event",
+    "sys-uid",
+    "sys-enrich-frontmatter",
+]
+
+# ── Registry schemas to include ───────────────────────────────────
+# Full schema set: the child inherits the parent's ontological vocabulary.
+
+[schemas]
+copy_dir = "registry/schemas"
+files = [
+    "entity.schema.json",
+    "event.schema.json",
+    "frontmatter.schema.yaml",
+    "metric.schema.json",
+    "relationship.schema.json",
+]
+
+# ── Seed atoms ────────────────────────────────────────────────────
+# Template documents that establish the four recurring motions.
+# Every project begins with these embryonic documents.
+
+[seed_atoms]
+source_dir = "scales/+1/seed-atoms"
+files = [
+    "research--seed.md",
+    "governance--seed.md",
+    "automation--seed.md",
+    "distribution--seed.md",
+]
+
+# ── Templates ─────────────────────────────────────────────────────
+# Rendered with project-specific values at scaffold time.
+
+[templates]
+source_dir = "scales/+1/templates"
+files = [
+    "sys.toml.tmpl",
+    "atom-registry.yaml.tmpl",
+    "manifest.toml.tmpl",
+    "README.md.tmpl",
+]
+
+# ── Default template values ───────────────────────────────────────
+# Overridden by CLI flags and project name.
+
+[defaults]
+version       = "0.1.0"
+schema        = "piece/v2"
+scale         = 0
+organ         = "LIMINAL"
+domain        = "Generative"
+law_version   = "1.0.0"
+
+[defaults.layers]
+names = ["distinction", "token", "relation", "rule", "flow", "feedback", "governance"]
+
+[defaults.categories]
+S = "Seed"
+F = "Foundation"
+P = "Primitives"
+M = "Materia"
+O = "Objects/Composition"
+G = "Governance"
+V = "Verse/Multiverse"
+
+# ── Directory structure to create ─────────────────────────────────
+# Empty directories that establish the recursive scaffold.
+
+[directories]
+create = [
+    "bin",
+    "registry/data",
+    "registry/schemas",
+    "scales/-1",
+    "scales/+1",
+    "archive",
+    "coverage",
+]

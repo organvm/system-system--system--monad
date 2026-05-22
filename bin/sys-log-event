@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+import argparse
+import json
+import os
+import hashlib
+import sys
+from datetime import datetime, timezone
+
+LEDGER_PATH = os.environ.get("SYS_LEDGER_PATH", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "registry", "data", "ledger.jsonl"))
+
+def generate_deterministic_uid(prefix: str, payload_str: str, length: int = 5) -> str:
+    h = hashlib.sha256(payload_str.encode('utf-8')).hexdigest().upper()
+    return f"{prefix}_{h[:length]}"
+
+def append_to_ledger(event_record: dict):
+    os.makedirs(os.path.dirname(LEDGER_PATH), exist_ok=True)
+    with open(LEDGER_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(event_record) + "\n")
+
+def main():
+    parser = argparse.ArgumentParser(description="Log a system event to the immutable registry ledger.")
+    parser.add_argument("--type", required=True, help="The event type (e.g., ENTITY_CREATED).")
+    parser.add_argument("--actor", default="system", help="The actor who initiated the event.")
+    parser.add_argument("--targets", required=True, help="Comma-separated list of target UIDs.")
+    parser.add_argument("--payload", default="{}", help="JSON string representing the event payload.")
+    
+    args = parser.parse_args()
+    
+    try:
+        payload_data = json.loads(args.payload)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing payload JSON: {e}", file=sys.stderr)
+        sys.exit(1)
+        
+    target_uids = [uid.strip() for uid in args.targets.split(",") if uid.strip()]
+    timestamp = datetime.now(timezone.utc).isoformat()
+    
+    # Mathematical derivation of event ID from its exact contents
+    event_genesis = json.dumps({
+        "event_type": args.type,
+        "timestamp": timestamp,
+        "actor": args.actor,
+        "target_uids": target_uids,
+        "payload": payload_data
+    }, sort_keys=True)
+    
+    event_uid = generate_deterministic_uid("evt", event_genesis)
+    
+    event_record = {
+        "uid": event_uid,
+        "event_type": args.type,
+        "timestamp": timestamp,
+        "actor": args.actor,
+        "target_uids": target_uids,
+        "payload": payload_data
+    }
+    
+    append_to_ledger(event_record)
+    print(f"Logged event {event_uid} to ledger.")
+
+if __name__ == "__main__":
+    main()

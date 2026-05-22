@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.swp
+*.swo
+*~
+.claude/
+.serena/
+_data/
+_build/
+_projected/
+coverage/

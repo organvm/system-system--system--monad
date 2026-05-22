@@ -1,0 +1,468 @@
+#!/usr/bin/env python3
+"""Enrich atom-bearing .md files with YAML frontmatter.
+
+Reads atom-registry.yaml and DOC-ENVELOPE HTML comments to construct
+canonical YAML frontmatter for each document. The system processing itself.
+
+Usage:
+    sys-enrich-frontmatter [--dry-run] [--file FILE]
+"""
+import json
+import os
+import re
+import sys
+import yaml
+import argparse
+from pathlib import Path
+
+root = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Pre-assigned UIDs for documents not yet in atom-registry
+# These files exist but were never cascaded / registered
+PREASSIGNED_UIDS = {
+    "system--energy.md": "DOC-F-02",
+    "system--isomorphism.md": "DOC-F-03",
+    "system--naming-calculus.md": "DOC-F-04",
+    "system--unfolding.md": "DOC-F-05",
+    "escrow-protocol.md": "DOC-G-02",
+    "existence--critique.md": "DOC-F-06",
+    "gap-analysis--cartography.md": "DOC-G-03",
+    "governance--teleology.md": "DOC-G-04",
+    "parameter-decomposition--seven-studies.md": "DOC-M-03",
+    "plane-existence--variables.md": "DOC-V-02",
+    "primitives--classification.md": "DOC-P-04",
+    "self-inclusion--shadow-instances.md": "DOC-O-02",
+    "universal-rendering--thesis.md": "DOC-M-04",
+    "verification--truth-striving.md": "DOC-O-03",
+    "ontological-cartography.md": "DOC-F-07",
+}
+
+# ── Registry loader ─────────────────────────────────────────────
+
+def load_registry():
+    reg_path = root / "atom-registry.yaml"
+    with open(reg_path) as f:
+        return yaml.safe_load(f)
+
+# ── DOC-ENVELOPE parser ────────────────────────────────────────
+
+def parse_envelope(content):
+    """Extract metadata from <!-- DOC-ENVELOPE ... --> HTML comment."""
+    m = re.search(r'<!--\s*DOC-ENVELOPE\s*\n(.*?)-->', content, re.DOTALL)
+    if not m:
+        return None
+    try:
+        return yaml.safe_load(m.group(1))
+    except yaml.YAMLError:
+        return None
+
+def extract_inline_atoms(content):
+    """Extract ATM marker IDs from inline <!-- ATM-X-NNN IN --> comments."""
+    return re.findall(r'<!--\s*(ATM-[SFPMOGV]-\d{3}[a-z]?)\s+IN', content)
+
+# ── Registry entity resolver ──────────────────────────────────
+
+_entity_locus_cache = None
+
+def resolve_entity_by_locus(filename):
+    """Fallback: scan registry/data/ent_*.json for matching operational_locus."""
+    global _entity_locus_cache
+    if _entity_locus_cache is None:
+        _entity_locus_cache = {}
+        reg_dir = root / "registry" / "data"
+        if reg_dir.exists():
+            for ent_file in reg_dir.glob("ent_*.json"):
+                try:
+                    data = json.loads(ent_file.read_text())
+                    locus = data.get("heartbeats", {}).get("operational_locus", "")
+                    if locus:
+                        _entity_locus_cache[locus] = data["uid"]
+                except (json.JSONDecodeError, KeyError):
+                    continue
+    return _entity_locus_cache.get(filename)
+
+# ── Frontmatter constructor ────────────────────────────────────
+
+def doc_to_frontmatter(doc_id, doc_meta, envelope, file_path):
+    """Build canonical frontmatter dict from registry + envelope data."""
+    name = Path(file_path).stem  # e.g., "system--existence"
+
+    # Entity UID from envelope, registry, or entity locus fallback
+    entity_uid = None
+    if envelope and "entity_uid" in envelope:
+        entity_uid = envelope["entity_uid"]
+    elif doc_meta and doc_meta.get("entity_uid"):
+        entity_uid = doc_meta["entity_uid"]
+    if not entity_uid:
+        entity_uid = resolve_entity_by_locus(Path(file_path).name)
+
+    # Nature and provenance from registry
+    nature = "FRAMEWORK"
+    provenance = "LOCAL"
+    if doc_meta:
+        nature = doc_meta.get("dominant_nature", "FRAMEWORK")
+        provenance = doc_meta.get("dominant_provenance", "LOCAL")
+    if envelope:
+        nature = envelope.get("dominant_nature", nature)
+        provenance = envelope.get("dominant_provenance", provenance)
+
+    # Category from doc_id (DOC-X-NN → X)
+    category = doc_id[4] if doc_id and len(doc_id) > 4 else "S"
+
+    # Atoms list
+    atoms = []
+    if doc_meta and "atoms" in doc_meta:
+        atoms = doc_meta["atoms"]
+
+    # Layer: derive from category
+    category_to_layer = {
+        "S": "meta",
+        "F": 0,
+        "P": 2,
+        "M": 3,
+        "O": 1,
+        "G": 6,
+        "V": 5,
+    }
+    layer = category_to_layer.get(category, 0)
+
+    # Domain from category
+    category_to_domain = {
+        "S": "Generative",
+        "F": "Foundation",
+        "P": "Primitives",
+        "M": "Materia",
+        "O": "Composition",
+        "G": "Governance",
+        "V": "Multiverse",
+    }
+    domain = category_to_domain.get(category, "Foundation")
+
+    # Determine formalization level from envelope or content
+    formalization = "FORMAL"
+    if envelope and envelope.get("type") == "derivation":
+        formalization = "FORMAL"
+    elif not envelope:
+        formalization = "SKETCHED"
+
+    # Determine lifecycle from formalization
+    form_to_lifecycle = {
+        "FORMAL": "formal",
+        "SKETCHED": "theory",
+        "INTUITIVE": "theory",
+        "EXCISED": "theory",
+        "VACUUM": "theory",
+    }
+    lifecycle = form_to_lifecycle.get(formalization, "theory")
+
+    # Integration: if atoms exist and are in registry, use 1A; otherwise 2A
+    integration = "1A" if atoms else "2A"
+
+    # Process type: derive from envelope type
+    process_type = None
+    if envelope and envelope.get("type") == "derivation":
+        process_type = None  # derivations are theory, not process
+
+    return {
+        "uid": doc_id,
+        "name": name,
+        "entity_uid": entity_uid,
+        "nature": nature,
+        "category": category,
+        "layer": layer,
+        "domain": domain,
+        "provenance": provenance,
+        "formalization": formalization,
+        "lifecycle": lifecycle,
+        "integration": integration,
+        "state": "active",
+        "version": 1,
+        "supersedes": None,
+        "superseded_by": None,
+        "process_type": process_type,
+        "atoms": atoms,
+    }
+
+def infer_domain_from_name(name):
+    """Infer domain from file name using kind--differentia pattern."""
+    name_domain_map = {
+        "system--": "Foundation",
+        "composition--": "Composition",
+        "containment--": "Governance",
+        "stratification--": "Primitives",
+        "scale--": "Materia",
+        "governance--": "Governance",
+        "verification--": "Composition",
+        "materon--": "Materia",
+        "multiverse--": "Multiverse",
+        "escrow-": "Governance",
+        "primitives--": "Primitives",
+        "plane-existence--": "Multiverse",
+        "universal-rendering--": "Materia",
+        "self-inclusion--": "Composition",
+        "gap-analysis--": "Governance",
+        "parameter-decomposition--": "Materia",
+        "parallel-studies--": "Primitives",
+        "existence--": "Foundation",
+        "subsumption--": "Primitives",
+        "challenge--": "Generative",
+        "ontological-": "Foundation",
+    }
+    for prefix, domain in name_domain_map.items():
+        if name.startswith(prefix):
+            return domain
+    return None
+
+def infer_frontmatter(file_path, content):
+    """Construct frontmatter for files NOT in atom-registry."""
+    name = Path(file_path).stem
+    inline_atoms = extract_inline_atoms(content)
+
+    # Try name-based inference first (more accurate)
+    domain = infer_domain_from_name(name)
+
+    # Fall back to content-based inference
+    if not domain:
+        if "materon" in content.lower() or "materia" in content.lower():
+            domain = "Materia"
+        elif "primitive" in content.lower():
+            domain = "Primitives"
+        elif "multiverse" in content.lower():
+            domain = "Multiverse"
+        elif "govern" in content.lower():
+            domain = "Governance"
+        elif "compos" in content.lower():
+            domain = "Composition"
+        else:
+            domain = "Foundation"
+
+    # Infer nature from headings
+    nature = "FRAMEWORK"
+    if re.search(r'## .*proof', content, re.I):
+        nature = "PROOF"
+    elif re.search(r'## .*definition', content, re.I):
+        nature = "DEFINITION"
+    elif re.search(r'## .*algorithm', content, re.I):
+        nature = "ALGORITHM"
+    elif re.search(r'## .*theorem', content, re.I):
+        nature = "PROOF"
+    elif re.search(r'\?\s*$', content[:500], re.M):
+        nature = "QUESTION"
+
+    # Category from domain
+    domain_to_category = {
+        "Generative": "S",
+        "Foundation": "F",
+        "Primitives": "P",
+        "Materia": "M",
+        "Composition": "O",
+        "Governance": "G",
+        "Multiverse": "V",
+    }
+    category = domain_to_category.get(domain, "F")
+
+    category_to_layer = {
+        "S": "meta", "F": 0, "P": 2, "M": 3,
+        "O": 1, "G": 6, "V": 5,
+    }
+
+    return {
+        "uid": f"DOC-{category}-XX",  # XX = needs manual assignment
+        "name": name,
+        "entity_uid": None,
+        "nature": nature,
+        "category": category,
+        "layer": category_to_layer.get(category, 0),
+        "domain": domain,
+        "provenance": "LOCAL",
+        "formalization": "SKETCHED",
+        "lifecycle": "theory",
+        "integration": "2A",
+        "state": "active",
+        "version": 1,
+        "supersedes": None,
+        "superseded_by": None,
+        "process_type": None,
+        "atoms": inline_atoms if inline_atoms else [],
+    }
+
+# ── YAML frontmatter writer ────────────────────────────────────
+
+def format_frontmatter(fm):
+    """Format frontmatter dict as YAML block."""
+    lines = ["---"]
+
+    # Identity
+    lines.append(f"uid: {fm['uid']}")
+    lines.append(f"name: {fm['name']}")
+    if fm['entity_uid']:
+        lines.append(f"entity_uid: {fm['entity_uid']}")
+    else:
+        lines.append("entity_uid: null  # VACUUM")
+    lines.append("")
+
+    # Classification
+    lines.append(f"nature: {fm['nature']}")
+    lines.append(f"category: {fm['category']}")
+    lines.append(f"layer: {fm['layer']}")
+    lines.append(f"domain: {fm['domain']}")
+    lines.append(f"provenance: {fm['provenance']}")
+    lines.append("")
+
+    # Lifecycle
+    lines.append(f"formalization: {fm['formalization']}")
+    lines.append(f"lifecycle: {fm['lifecycle']}")
+    lines.append(f"integration: {fm['integration']}")
+    lines.append(f"state: {fm['state']}")
+    lines.append("")
+
+    # Versioning
+    lines.append(f"version: {fm['version']}")
+    if fm['supersedes']:
+        lines.append(f"supersedes: {fm['supersedes']}")
+    else:
+        lines.append("supersedes: null")
+    if fm['superseded_by']:
+        lines.append(f"superseded_by: {fm['superseded_by']}")
+    else:
+        lines.append("superseded_by: null")
+    lines.append("")
+
+    # Process
+    if fm['process_type']:
+        lines.append(f"process_type: {fm['process_type']}")
+    else:
+        lines.append("process_type: null")
+    lines.append("")
+
+    # Atoms
+    if fm['atoms']:
+        lines.append("atoms:")
+        for atom in fm['atoms']:
+            lines.append(f"  - {atom}")
+    else:
+        lines.append("atoms: []")
+
+    lines.append("---")
+    return "\n".join(lines)
+
+# ── Main ───────────────────────────────────────────────────────
+
+def has_frontmatter(content):
+    """Check if file already has YAML frontmatter."""
+    return content.startswith("---\n")
+
+def enrich_file(file_path, registry, dry_run=False):
+    """Add YAML frontmatter to a single file."""
+    rel_path = str(file_path.relative_to(root))
+
+    with open(file_path) as f:
+        content = f.read()
+
+    if has_frontmatter(content):
+        print(f"  SKIP {rel_path} (already has frontmatter)")
+        return False
+
+    # Find document in registry
+    doc_id = None
+    doc_meta = None
+    for did, dmeta in registry.get("documents", {}).items():
+        if dmeta.get("file") == rel_path:
+            doc_id = did
+            doc_meta = dmeta
+            break
+
+    # Parse envelope
+    envelope = parse_envelope(content)
+
+    # Check envelope for doc ID — but DON'T use registry metadata
+    # if the file path doesn't match (prevents cross-contamination)
+    if not doc_id and envelope and "id" in envelope:
+        env_id = envelope["id"]
+        reg_entry = registry.get("documents", {}).get(env_id)
+        if reg_entry and reg_entry.get("file") == rel_path:
+            # File path matches — safe to use registry metadata
+            doc_id = env_id
+            doc_meta = reg_entry
+        else:
+            # Envelope claims an ID but file doesn't match registry
+            # Use envelope data only, assign a new UID
+            doc_id = env_id + "-ALT"  # flag for manual resolution
+            doc_meta = None  # don't use wrong registry data
+
+    # Check for preassigned UID
+    if not doc_id and rel_path in PREASSIGNED_UIDS:
+        doc_id = PREASSIGNED_UIDS[rel_path]
+
+    # Build frontmatter
+    if doc_id and doc_meta:
+        fm = doc_to_frontmatter(doc_id, doc_meta, envelope, file_path)
+    elif envelope:
+        # Envelope without matching registry — build atom list from envelope sections
+        env_atoms = []
+        for section in envelope.get("sections", []):
+            env_atoms.extend(section.get("atoms", []))
+        pseudo_meta = {
+            "dominant_nature": envelope.get("dominant_nature", "FRAMEWORK"),
+            "dominant_provenance": envelope.get("dominant_provenance", "LOCAL"),
+            "atoms": env_atoms,
+            "entity_uid": envelope.get("entity_uid"),
+        }
+        final_id = doc_id if doc_id and "-ALT" not in str(doc_id) else PREASSIGNED_UIDS.get(rel_path, envelope.get("id", "DOC-X-XX"))
+        fm = doc_to_frontmatter(
+            final_id,
+            pseudo_meta, envelope, file_path
+        )
+    else:
+        fm = infer_frontmatter(file_path, content)
+        # Apply preassigned UID if available
+        if rel_path in PREASSIGNED_UIDS:
+            fm["uid"] = PREASSIGNED_UIDS[rel_path]
+
+    fm_text = format_frontmatter(fm)
+
+    if dry_run:
+        print(f"  WOULD ENRICH {rel_path}")
+        print(f"    uid={fm['uid']} atoms={len(fm['atoms'])} nature={fm['nature']}")
+        return True
+
+    new_content = fm_text + "\n\n" + content
+    with open(file_path, "w") as f:
+        f.write(new_content)
+
+    print(f"  ENRICHED {rel_path} — uid={fm['uid']} atoms={len(fm['atoms'])}")
+    return True
+
+def main():
+    parser = argparse.ArgumentParser(description="Enrich .md files with YAML frontmatter")
+    parser.add_argument("--dry-run", action="store_true", help="Preview without writing")
+    parser.add_argument("--file", type=str, help="Enrich a single file")
+    args = parser.parse_args()
+
+    registry = load_registry()
+
+    if args.file:
+        file_path = root / args.file
+        if not file_path.exists():
+            print(f"ERROR: {args.file} not found")
+            sys.exit(1)
+        enrich_file(file_path, registry, args.dry_run)
+        return
+
+    # Process all root-level .md atom files (flat structure)
+    targets = []
+    skip_names = {"README.md", "LAWS.md", "CHANGELOG.md", "BOOTSTRAP.md", "1PASSWORD_SETUP.md"}
+    for p in sorted(root.glob("*.md")):
+        if p.name not in skip_names:
+            targets.append(p)
+
+    print(f"Processing {len(targets)} files...")
+    enriched = 0
+    for fp in targets:
+        if enrich_file(fp, registry, args.dry_run):
+            enriched += 1
+
+    print(f"\nDone. {enriched} files {'would be' if args.dry_run else ''} enriched.")
+
+if __name__ == "__main__":
+    main()

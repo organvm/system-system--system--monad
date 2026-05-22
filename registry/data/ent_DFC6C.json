@@ -1,0 +1,15 @@
+{
+  "uid": "ent_DFC6C",
+  "type": "axiom",
+  "expression": {
+    "name": "System Unfolding",
+    "slug": "axiom--unfolding",
+    "aliases": []
+  },
+  "created_at": "2026-04-05T17:20:32.936146+00:00",
+  "heartbeats": {
+    "operational_locus": "system--unfolding.md",
+    "formal_locus": "axiom--unfolding",
+    "governance_locus": "GH-#7"
+  }
+}

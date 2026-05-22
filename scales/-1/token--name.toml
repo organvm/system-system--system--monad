@@ -1,0 +1,80 @@
+# σ=-1 Manifest: internals of token--name
+# A name IS a system: grapheme distinctions → codepoint tokens → adjacency → encoding rules.
+# Same schema as σ=0. The fixed-point property holds.
+
+[meta]
+# Validated by `piece --validate` against sys.toml
+version  = "0.2.0"
+schema   = "piece/v2"
+scale    = -1
+parent   = "token--name"
+parent_scale = 0
+layers   = ["distinction", "token", "relation", "rule"]
+
+# ─── Layer 0: Distinctions ──────────────────────────────────────
+
+[pieces.distinction--grapheme]
+layer        = 0
+kind         = "distinction"
+differentia  = "grapheme"
+[pieces.distinction--grapheme.interface]
+creates      = "this-symbol/next-symbol"
+requires     = []
+arity        = 2
+[pieces.distinction--grapheme.instance]
+state        = "active"
+irreducible  = true
+[pieces.distinction--grapheme.composition]
+type         = "atomic"
+
+# ─── Layer 1: Tokens ────────────────────────────────────────────
+
+[pieces.token--codepoint]
+layer        = 1
+kind         = "token"
+differentia  = "codepoint"
+[pieces.token--codepoint.interface]
+stabilizes   = "distinction--grapheme"
+requires     = ["distinction--grapheme"]
+persistence  = "encoding"
+[pieces.token--codepoint.instance]
+state        = "active"
+format       = "utf32"
+encoding     = "unicode"
+[pieces.token--codepoint.composition]
+type         = "atomic"
+
+# ─── Layer 2: Relations ─────────────────────────────────────────
+
+[pieces.relation--adjacency]
+layer        = 2
+kind         = "relation"
+differentia  = "adjacency"
+[pieces.relation--adjacency.interface]
+binds        = ["token--codepoint", "token--codepoint"]
+arity        = 2
+directed     = true
+operator     = "→"
+[pieces.relation--adjacency.instance]
+state        = "active"
+reflexive    = false
+transitive   = false
+[pieces.relation--adjacency.composition]
+type         = "atomic"
+
+# ─── Layer 3: Rules ─────────────────────────────────────────────
+
+[pieces.rule--encoding]
+layer        = 3
+kind         = "rule"
+differentia  = "encoding"
+[pieces.rule--encoding.interface]
+constrains   = ["token--codepoint", "relation--adjacency"]
+requires     = ["relation--adjacency"]
+enforcement  = "structural"
+[pieces.rule--encoding.instance]
+state        = "active"
+violable     = false
+normalization = "NFC"
+[pieces.rule--encoding.composition]
+type         = "atomic"

@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+import argparse
+import subprocess
+import json
+import sys
+import os
+from datetime import datetime, timezone
+
+root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def run_cmd(cmd):
+    res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    return res.stdout.strip()
+
+def main():
+    parser = argparse.ArgumentParser(description="Deterministic cascade of system items.")
+    parser.add_argument("--parent", required=True, help="UID of the parent node.")
+    parser.add_argument("--type", default="document", help="Entity type.")
+    parser.add_argument("--name", required=True, help="Human expression Name.")
+    parser.add_argument("--slug", required=True, help="Unique string difference/slug.")
+    
+    args = parser.parse_args()
+
+    # Genesis calculation for child
+    payload = {
+        "genesis": True,
+        "type": args.type,
+        "parent": args.parent,
+        "slug": args.slug
+    }
+    payload_str = json.dumps(payload, sort_keys=True)
+    
+    # 1. Spawn UID
+    child_uid = run_cmd([f"{root}/bin/sys-uid", "ent", payload_str])
+    
+    # 2. Relationship linking
+    rel_payload = json.dumps({
+        "genesis": True,
+        "source": args.parent,
+        "target": child_uid,
+        "type": "PARENT_CHILD"
+    }, sort_keys=True)
+    rel_uid = run_cmd([f"{root}/bin/sys-uid", "rel", rel_payload])
+
+    # 3. Create Entity object
+    entity = {
+        "uid": child_uid,
+        "type": args.type,
+        "expression": {"name": args.name, "slug": args.slug, "aliases": []},
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    with open(f"{root}/registry/data/{child_uid}.json", "w") as f:
+        json.dump(entity, f, indent=2)
+        
+    relationship = {
+        "uid": rel_uid,
+        "source_uid": args.parent,
+        "target_uid": child_uid,
+        "type": "PARENT_CHILD",
+        "valid_from": datetime.now(timezone.utc).isoformat(),
+        "valid_to": None
+    }
+    with open(f"{root}/registry/data/{rel_uid}.json", "w") as f:
+        json.dump(relationship, f, indent=2)
+
+    # 4. Log events
+    run_cmd([
+        f"{root}/bin/sys-log-event",
+        "--type", "ENTITY_CREATED",
+        "--actor", "cascade_engine",
+        "--targets", child_uid,
+        "--payload", payload_str
+    ])
+    
+    run_cmd([
+        f"{root}/bin/sys-log-event",
+        "--type", "RELATIONSHIP_ESTABLISHED",
+        "--actor", "cascade_engine",
+        "--targets", f"{args.parent},{child_uid},{rel_uid}",
+        "--payload", rel_payload
+    ])
+    
+    print(f"Cascaded successfully:\n  Parent: {args.parent}\n  Child UID: {child_uid}\n  Rel UID: {rel_uid}")
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,97 @@
+# σ=+1 Manifest: this system as a piece within a system-of-systems
+# At σ+1, the entire σ=0 manifest collapses to a single token.
+# Same schema. The fixed-point property holds upward too.
+
+[meta]
+# Validated by `piece --validate` against sys.toml
+version  = "0.2.0"
+schema   = "piece/v2"
+scale    = 1
+layers   = ["distinction", "token", "relation", "flow"]
+
+# ─── Layer 0: Distinctions ──────────────────────────────────────
+
+[pieces.distinction--domain]
+layer        = 0
+kind         = "distinction"
+differentia  = "domain"
+[pieces.distinction--domain.interface]
+creates      = "this-system/other-system"
+requires     = []
+arity        = 2
+[pieces.distinction--domain.instance]
+state        = "active"
+irreducible  = true
+[pieces.distinction--domain.composition]
+type         = "atomic"
+
+# ─── Layer 1: Tokens ────────────────────────────────────────────
+
+[pieces.token--system]
+layer        = 1
+kind         = "token"
+differentia  = "system"
+[pieces.token--system.interface]
+stabilizes   = "distinction--domain"
+requires     = ["distinction--domain"]
+persistence  = "persistent"
+[pieces.token--system.instance]
+state        = "active"
+format       = "manifest"
+encoding     = "toml"
+scale_depth  = 7
+[pieces.token--system.composition]
+type         = "system"
+manifest     = "../../manifest.toml"
+piece_count  = 15
+
+[pieces.token--peer]
+layer        = 1
+kind         = "token"
+differentia  = "peer"
+[pieces.token--peer.interface]
+stabilizes   = "distinction--domain"
+requires     = ["distinction--domain"]
+persistence  = "persistent"
+[pieces.token--peer.instance]
+state        = "potential"
+format       = "manifest"
+encoding     = "toml"
+[pieces.token--peer.composition]
+type         = "system"
+manifest     = ""
+piece_count  = 0
+
+# ─── Layer 2: Relations ─────────────────────────────────────────
+
+[pieces.relation--federation]
+layer        = 2
+kind         = "relation"
+differentia  = "federation"
+[pieces.relation--federation.interface]
+binds        = ["token--system", "token--peer"]
+arity        = 2
+directed     = false
+operator     = "≈"
+[pieces.relation--federation.instance]
+state        = "dormant"
+reflexive    = false
+transitive   = true
+[pieces.relation--federation.composition]
+type         = "atomic"
+
+# ─── Layer 4: Flows ─────────────────────────────────────────────
+
+[pieces.flow--interchange]
+layer        = 4
+kind         = "flow"
+differentia  = "interchange"
+[pieces.flow--interchange.interface]
+activates    = ["relation--federation"]
+requires     = ["relation--federation"]
+direction    = "bidirectional"
+[pieces.flow--interchange.instance]
+state        = "dormant"
+protocol     = "unspecified"
+[pieces.flow--interchange.composition]
+type         = "atomic"

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "System Event",
+  "description": "An entry in the append-only ledger detailing a structural mutation.",
+  "type": "object",
+  "properties": {
+    "uid": {
+      "type": "string",
+      "pattern": "^evt_[a-zA-Z0-9]{5}$"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "ENTITY_CREATED", 
+        "ENTITY_RENAMED", 
+        "ENTITIES_RELOCATED", 
+        "RELATIONSHIP_SEVERED",
+        "RELATIONSHIP_ESTABLISHED",
+        "METRIC_OBSERVED"
+      ],
+      "description": "The type of mutation or state change being recorded."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "type": "string",
+      "description": "The system or human agent that initiated the event."
+    },
+    "target_uids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "The UIDs of entities, relationships, or metrics affected."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Specifics of the mutation (e.g., old_slug vs new_slug, parent changes)."
+    }
+  },
+  "required": ["uid", "event_type", "timestamp", "target_uids"]
+}

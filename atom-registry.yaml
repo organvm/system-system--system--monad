@@ -1,0 +1,1216 @@
+# atom-registry.yaml — computed from in-situ ATM markers
+# Generated: 2026-04-04
+# Total atoms: 75
+# Total documents: 25 (1 duplicate skipped)
+# Unaccounted: 0
+
+meta:
+  version: "1.1.0"
+  sop: "SOP-SS-ATM-001_001"
+  amendment: "SOP-SS-ATM-001_002"
+  generated: "2026-04-04"
+  cascade_applied: "2026-04-04"
+  total_atoms: 89
+  categories:
+    S: { name: "Seed", count: 3 }
+    F: { name: "Foundation", count: 7 }
+    P: { name: "Primitives", count: 31 }
+    M: { name: "Materia", count: 21 }
+    O: { name: "Objects/Composition", count: 8 }
+    G: { name: "Governance", count: 12 }
+    V: { name: "Verse/Multiverse", count: 7 }
+  schema:
+    layer_values: [0, 1, 2, 3, 4, 5, 6, "meta"]
+    layer_meta_note: "meta = atoms that define classification axes; presuppose nothing; not self-referentially classified"
+    nature_vocabulary: [FRAMEWORK, CLAIM, DEFINITION, PROOF, AXIOM, MODEL, DISTINCTION, ALGORITHM, SCHEMA, QUESTION, CONJECTURE, PROTOCOL, INSTRUCTION]
+    nature_additions:
+      DISTINCTION:
+        added: "2026-04-04"
+        definition: "Draws a categorical boundary between two conceptual regimes"
+        atoms: [ATM-P-019, ATM-P-020, ATM-M-005, ATM-O-007, ATM-G-001, ATM-G-009]
+    granularity_qualifiers: [MINIMAL, COUPLED_SEQUENCE]
+    provenance_qualifiers:
+      seed_type: [DIRECTIVE, POETIC, INTERROGATIVE]
+    integration_rules:
+      meta_atoms: "1A always"
+      axiom_proof: "1A or 1B"
+      sketched_non_meta: "2A ceiling (documented exceptions for foundational atoms)"
+      question_conjecture: "3A"
+
+documents:
+  DOC-S-01:
+    file: "challenge--statement.md"
+    entity_uid: "ent_C33B9"
+    atoms: [ATM-S-001, ATM-S-002, ATM-S-003]
+    dominant_provenance: LOCAL
+    dominant_nature: FRAMEWORK
+  DOC-F-01:
+    file: "system--existence.md"
+    entity_uid: "ent_C15F4"
+    atoms: [ATM-F-001, ATM-F-002, ATM-F-003, ATM-F-004, ATM-F-005, ATM-F-006, ATM-F-007]
+    dominant_provenance: HYBRID
+    dominant_nature: DEFINITION
+  DOC-P-01:
+    file: "stratification--primitives.md"
+    entity_uid: "ent_2247D"
+    atoms: [ATM-P-011, ATM-P-012, ATM-P-013, ATM-P-014, ATM-P-015, ATM-P-016, ATM-P-017, ATM-P-018, ATM-P-019, ATM-P-020, ATM-P-021]
+    dominant_provenance: HYBRID
+    dominant_nature: FRAMEWORK
+  DOC-P-02:
+    file: "parallel-studies--seven.md"
+    entity_uid: "ent_D2E46"
+    atoms: [ATM-P-001, ATM-P-002, ATM-P-003, ATM-P-004, ATM-P-005, ATM-P-006, ATM-P-007, ATM-P-008, ATM-P-009, ATM-P-010]
+    dominant_provenance: HYBRID
+    dominant_nature: FRAMEWORK
+  DOC-M-01:
+    file: "materon--formalization.md"
+    entity_uid: "ent_3B709"
+    atoms: [ATM-M-005, ATM-M-006, ATM-M-007, ATM-M-008, ATM-M-009, ATM-M-010, ATM-M-011, ATM-M-012, ATM-M-013, ATM-M-014, ATM-M-015, ATM-M-016, ATM-M-017, ATM-M-018, ATM-M-019, ATM-M-020, ATM-M-021]
+    dominant_provenance: HYBRID
+    dominant_nature: DEFINITION
+  DOC-M-02:
+    file: "scale--invariance.md"
+    entity_uid: "ent_0705E"
+    atoms: [ATM-M-001, ATM-M-002, ATM-M-003, ATM-M-004]
+    dominant_provenance: HYBRID
+    dominant_nature: CLAIM
+  DOC-O-01:
+    file: "composition--well-founded.md"
+    entity_uid: "ent_B85C9"
+    atoms: [ATM-O-001, ATM-O-002, ATM-O-003, ATM-O-004, ATM-O-005, ATM-O-006, ATM-O-007, ATM-O-008]
+    dominant_provenance: HYBRID
+    dominant_nature: AXIOM
+    note: "ATM-O-006 is FLAGGED duplicate content"
+  DOC-G-01:
+    file: "containment--stack.md"
+    entity_uid: "ent_ECB3E"
+    atoms: [ATM-G-001, ATM-G-002, ATM-G-003, ATM-G-004, ATM-G-005, ATM-G-006, ATM-G-007, ATM-G-008, ATM-G-009, ATM-G-010, ATM-G-011, ATM-G-012]
+    dominant_provenance: HYBRID
+    dominant_nature: FRAMEWORK
+  DOC-V-01:
+    file: "multiverse--pipeline.md"
+    entity_uid: "ent_BEDF9"
+    atoms: [ATM-V-001, ATM-V-002, ATM-V-003, ATM-V-004, ATM-V-005, ATM-V-006, ATM-V-007]
+    dominant_provenance: HYBRID
+    dominant_nature: AXIOM
+    note: "Pipeline2.md is byte-identical duplicate — not independently marked"
+  DOC-P-03:
+    file: "subsumption--external-primitives.md"
+    entity_uid: "ent_E7D9B"
+    atoms: [ATM-P-022, ATM-P-023, ATM-P-024, ATM-P-025, ATM-P-026, ATM-P-027, ATM-P-028, ATM-P-029, ATM-P-030, ATM-P-031]
+    dominant_provenance: HYBRID
+    dominant_nature: FRAMEWORK
+  DOC-F-02:
+    file: "system--energy.md"
+    entity_uid: "ent_82A43"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: DEFINITION
+  DOC-F-03:
+    file: "system--isomorphism.md"
+    entity_uid: "ent_3452E"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: DEFINITION
+  DOC-F-04:
+    file: "system--naming-calculus.md"
+    entity_uid: "ent_E1FEE"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: PROOF
+  DOC-F-05:
+    file: "system--unfolding.md"
+    entity_uid: "ent_DFC6C"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: FRAMEWORK
+  DOC-F-06:
+    file: "existence--critique.md"
+    entity_uid: "ent_201CB"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: DEFINITION
+  DOC-G-02:
+    file: "escrow-protocol.md"
+    entity_uid: "ent_4E79B"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: ALGORITHM
+  DOC-G-03:
+    file: "gap-analysis--cartography.md"
+    entity_uid: "ent_67C08"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: FRAMEWORK
+  DOC-G-04:
+    file: "governance--teleology.md"
+    entity_uid: "ent_A804E"
+    atoms: [ATM-G-001, ATM-G-002, ATM-G-003, ATM-G-004, ATM-G-005]
+    dominant_provenance: LOCAL
+    dominant_nature: DEFINITION
+  DOC-M-03:
+    file: "parameter-decomposition--seven-studies.md"
+    entity_uid: "ent_231BC"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: ALGORITHM
+  DOC-M-04:
+    file: "universal-rendering--thesis.md"
+    entity_uid: "ent_A4F0D"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: ALGORITHM
+  DOC-O-02:
+    file: "self-inclusion--shadow-instances.md"
+    entity_uid: "ent_F70D1"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: ALGORITHM
+  DOC-O-03:
+    file: "verification--truth-striving.md"
+    entity_uid: "ent_B8A48"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: PROOF
+  DOC-P-04:
+    file: "primitives--classification.md"
+    entity_uid: "ent_9DC44"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: FRAMEWORK
+  DOC-V-02:
+    file: "plane-existence--variables.md"
+    entity_uid: "ent_E786E"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: QUESTION
+  DOC-F-07:
+    file: "ontological-cartography.md"
+    entity_uid: "ent_B7087"
+    atoms: []
+    dominant_provenance: LOCAL
+    dominant_nature: ALGORITHM
+
+# ═══════════════════════════════════════════════════════════════════
+# ATOM REGISTRY
+# ═══════════════════════════════════════════════════════════════════
+
+atoms:
+
+  # ─── SEED (S) ────────────────────────────────────────────────────
+
+  ATM-S-001:
+    idea: "A system-to-contain-all-systems emerges from multiverse-generation of parallel instances competing to define identity as ideal"
+    doc: DOC-S-01
+    provenance: LOCAL
+    nature: FRAMEWORK
+    layers: [0, 3, 5, 6]
+    domain: Generative
+    formalization: INTUITIVE
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-S-002:
+    idea: "Observer stance: eyes fixed across temporal modes (was, is, becoming) — atemporal"
+    doc: DOC-S-01
+    provenance: LOCAL
+    nature: CLAIM
+    layers: [0, 5]
+    domain: Generative
+    formalization: INTUITIVE
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-S-003:
+    idea: "Challenge directive: enter a directory with logic-bound truths and build the system around those unbreakable laws"
+    doc: DOC-S-01
+    provenance: LOCAL
+    nature: INSTRUCTION
+    layers: [0, 3, 6]
+    domain: Generative
+    formalization: INTUITIVE
+    editorial: CLEAN
+    integration: 1A
+
+  # ─── FOUNDATION (F) ──────────────────────────────────────────────
+
+  ATM-F-001:
+    idea: "A system exists iff its elements are not independent — measurable, falsifiable, provable"
+    doc: DOC-F-01
+    provenance: LOCAL
+    nature: CLAIM
+    layers: [0, 2]
+    domain: Foundation
+    formalization: INTUITIVE
+    formalized_by: ATM-F-002
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-F-002:
+    idea: "System defined as H(S) < Σ H(e_i) — joint entropy strictly less than sum of individual entropies"
+    doc: DOC-F-01
+    provenance: HYBRID
+    nature: DEFINITION
+    layers: [0, 2]
+    domain: Foundation
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-F-003:
+    idea: "ΔS = Σ H(e_i) - H(S) quantifies degree of systemhood; zero = collection, positive = system, max = deterministic machine"
+    doc: DOC-F-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [0, 2]
+    domain: Foundation
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-F-004:
+    idea: "Subadditivity theorem: H(e1,...,en) ≤ Σ H(ei) with equality iff mutually independent — proof via chain rule"
+    doc: DOC-F-01
+    provenance: HYBRID
+    nature: PROOF
+    layers: [2]
+    domain: Foundation
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-F-005:
+    idea: "System definition restated across entropy, state-space, dynamical, and category-theoretic frames"
+    doc: DOC-F-01
+    provenance: HYBRID
+    nature: MODEL
+    layers: [0, 2]
+    domain: Foundation
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-F-006:
+    idea: "Five consequences: provable, falsifiable, quantitative, emergence located as relational entropy, boundary derived not assumed"
+    doc: DOC-F-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [0, 2, 6]
+    domain: Foundation
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-F-007:
+    idea: "A system is a set of elements whose joint state space is smaller than the product of their individual state spaces"
+    doc: DOC-F-01
+    provenance: HYBRID
+    nature: DEFINITION
+    layers: [0]
+    domain: Foundation
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  # ─── PRIMITIVES (P) ──────────────────────────────────────────────
+
+  ATM-P-001:
+    idea: "Each primitive is not a settled layer but a live inquiry running in parallel — the system emerges from their mutual pressure"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: CLAIM
+    layers: [0, 1, 2, 3, 4, 5, 6]
+    domain: Primitives
+    formalization: INTUITIVE
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-002:
+    idea: "Study 1 — Signal Theory: the threshold problem — what counts as a difference"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: FRAMEWORK
+    layers: [0]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: COUPLED_SEQUENCE
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-P-003:
+    idea: "Study 2 — State Mechanics: stateless vs stateful is a spectrum"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: FRAMEWORK
+    layers: [1]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: COUPLED_SEQUENCE
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-P-004:
+    idea: "Study 3 — Rule Dynamics: rules compete, surviving rule-set produces viable schemas"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: FRAMEWORK
+    layers: [3]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: COUPLED_SEQUENCE
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-P-005:
+    idea: "Study 4 — Interface Negotiation: every interface is a political act"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: FRAMEWORK
+    layers: [2, 3]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: COUPLED_SEQUENCE
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-P-006:
+    idea: "Study 5 — Loop Ecology: loops are the Darwinian layer; empirical, not predictable"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: FRAMEWORK
+    layers: [4, 5]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: COUPLED_SEQUENCE
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-P-007:
+    idea: "Study 6 — Schema Competition: system-ideal = whichever schema the protocol layer selects"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: FRAMEWORK
+    layers: [3, 5, 6]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: COUPLED_SEQUENCE
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-P-008:
+    idea: "Study 7 — Protocol Genesis: governance emerges from ungoverned competition; never completes"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: FRAMEWORK
+    layers: [6]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: COUPLED_SEQUENCE
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-P-009:
+    idea: "Poetic fragment maps as derivation depth — outermost claim is weakest, depends on all unresolved studies"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: MODEL
+    layers: [0, 1, 2, 3, 4, 5, 6]
+    domain: Primitives
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-P-010:
+    idea: "The system is all seven studies running at once — the system is whatever their interference pattern produces"
+    doc: DOC-P-02
+    provenance: HYBRID
+    seed_type: POETIC
+    nature: CLAIM
+    layers: [0, 1, 2, 3, 4, 5, 6]
+    domain: Primitives
+    formalization: INTUITIVE
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-011:
+    idea: "Layer 0 — Distinctions: the irreducible act of drawing a boundary"
+    doc: DOC-P-01
+    provenance: LOCAL
+    nature: FRAMEWORK
+    layers: [meta]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: MINIMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-012:
+    idea: "Layer 1 — Tokens: stabilized distinctions with persistent identity"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [meta]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: MINIMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-013:
+    idea: "Layer 2 — Relations: constraints on token co-occurrence"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [meta]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: MINIMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-014:
+    idea: "Layer 3 — Rules: second-order constraints governing permissible connections"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [meta]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: MINIMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-015:
+    idea: "Layer 4 — Flows: rules activated in time"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [meta]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: MINIMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-016:
+    idea: "Layer 5 — Feedback: self-referential flows enabling regulation, adaptation, drift, collapse"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [meta]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: MINIMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-017:
+    idea: "Layer 6 — Governance: rules about which rules may change"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [meta]
+    domain: Primitives
+    formalization: SKETCHED
+    granularity: MINIMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-018:
+    idea: "Strict nesting + recursive decomposition: every primitive at one layer is itself a system at finer resolution"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [0, 1, 2, 3, 4, 5, 6]
+    domain: Primitives
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-019:
+    idea: "Universality audit: Layers 0-2 ontological, 3-4 structural (conditional)"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: DISTINCTION
+    layers: [0, 1, 2, 3, 4]
+    domain: Primitives
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-P-020:
+    idea: "Layers 5-6 are architectural, domain-dependent (feedback requires output→input path; governance requires self-modification capacity)"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: DISTINCTION
+    layers: [5, 6]
+    domain: Primitives
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-P-021:
+    idea: "Cone of increasing contingency: 3 ontological + 2 structural + 2 architectural; original framing overstated universality"
+    doc: DOC-P-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [0, 1, 2, 3, 4, 5, 6]
+    domain: Primitives
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-P-022:
+    idea: "What assembles every instance of existence from base primitives? Three external framings: physics (quantum fields), information (bits/qubits), philosophy (monads/experience-quanta)"
+    doc: DOC-P-03
+    provenance: LOCAL
+    nature: QUESTION
+    layers: [0]
+    domain: Primitives
+    formalization: INTUITIVE
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-023:
+    idea: "Common structure: all three share (substrate primitive + combination rules + emergence). Differ on what the primitive IS, not on combinatorial architecture"
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [0, 1, 2]
+    domain: Primitives
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-024:
+    idea: "Physics framing: field/vacuum = L0, particle = L1, coupling = L2, physical law = L3 (given not derived). Covers L0-3. Violates Law 4: commits to bottom scale. Partially satisfies Law 1."
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: MODEL
+    layers: [0, 1, 2, 3]
+    domain: Primitives
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-025:
+    idea: "Information framing: 0/1 = L0, register = L1, conditional entropy = L2. Provides Law 1 natively. Conflates measure with measured — cannot distinguish substrates with identical entropy. Lacks L3-6."
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: MODEL
+    layers: [0, 1, 2]
+    domain: Primitives
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-026:
+    idea: "Philosophy framing: self/other = L0, substance = L1, harmony/prehension = L2, self-reference = L5 native. Fails Law 1 (no measurable ΔS). Most compatible with Law 4 but lacks formal δ."
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: MODEL
+    layers: [0, 1, 2, 5]
+    domain: Primitives
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-027:
+    idea: "Convergence: all three agree on L0-2 (ontological kernel). Physics adds L3, Information adds Law 1, Philosophy adds L5. None covers L4, L6, or Law 4. Intersection = base of cone of contingency."
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: DISTINCTION
+    layers: [0, 1, 2, 3, 4, 5, 6]
+    domain: Primitives
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-028:
+    idea: "System's answer: primitive = materon tuple (σ, Γ, N, δ) recurring at every scale (Law 4). Instance = G(σ, θ) within C(σ). Building blocks are not blocks — they are the relational pattern at the observer's scale."
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: DEFINITION
+    layers: [0, 1, 2, 3, 4]
+    domain: Primitives
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-029:
+    idea: "Irreducible parameter set: d_spatial, d_compact, coupling_i, range_i, energy_quantity, time_direction, time_rate, reversibility, selection_rule_j, entropy_bound. Instance = pattern + parameters + constraints."
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: DEFINITION
+    layers: [0, 1, 2]
+    domain: Primitives
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-030:
+    idea: "Subsumption theorem: each framing is a proper projection — physics = G(σ_Planck, θ_QFT), information = ΔS metric on Im(G), philosophy = A5 self-inclusion minus δ. System is minimal cover containing all three."
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: PROOF
+    layers: [0, 1, 2, 3, 4, 5, 6]
+    domain: Primitives
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-P-031:
+    idea: "Residual gaps from external framings: (1) physics demands empirical materon candidates (→ATM-M-014), (2) info theory demands computable ΔS, (3) philosophy demands formalized observer (→URT A5). Framings are system's outstanding creditors."
+    doc: DOC-P-03
+    provenance: HYBRID
+    nature: QUESTION
+    layers: [0, 3, 5]
+    domain: Primitives
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 3A
+
+  # ─── MATERIA (M) ─────────────────────────────────────────────────
+
+  ATM-M-001:
+    idea: "Any container of materons is itself a materon at the next scale — structural identity via (σ, Γ, N, δ)"
+    doc: DOC-M-02
+    provenance: LOCAL
+    nature: CLAIM
+    layers: [0, 1, 2]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-M-002:
+    idea: "The materon tuple instantiates identically at atomic, molecular, cellular, organismal, social, planetary scales"
+    doc: DOC-M-02
+    provenance: HYBRID
+    nature: MODEL
+    layers: [0, 1, 2, 3]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-M-003:
+    idea: "Three consequences of scale invariance: programs nest, observation is peer-to-peer, compiler problem is self-similar"
+    doc: DOC-M-02
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [2, 3, 4, 5]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-M-004:
+    idea: "Self-referential closure: the spec is a configuration field in a materia of concepts; reading changes the reader"
+    doc: DOC-M-02
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [4, 5, 6]
+    domain: Materia
+    formalization: INTUITIVE
+    editorial: CLEAN
+    integration: 2B
+
+  ATM-M-005:
+    idea: "PM inverts computation-on-matter to computation-as-matter; primitive = reconfigurable material unit"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: DISTINCTION
+    layers: [0]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-M-006:
+    idea: "PM field definition: materon-based substrate at intersection of CA, metamaterials, chemical computing, active matter"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: DEFINITION
+    layers: [0, 1, 2, 3]
+    domain: Materia
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-M-007:
+    idea: "Materon m = (σ, Γ, N, δ): state, affordance set, neighborhood, transition function"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: DEFINITION
+    layers: [0, 1]
+    domain: Materia
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-M-008:
+    idea: "Four materon constraints: locality, conservation, reversibility (optional), finite state"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: AXIOM
+    layers: [2, 3]
+    domain: Materia
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-M-009:
+    idea: "Five layers L0-L4: materonic substrate → configuration fields → propagation → morphological computation → self-reconfiguration"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [0, 1, 2, 3, 4]
+    domain: Materia
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-M-010:
+    idea: "Turing-completeness conjecture: 3D lattice with |S| ≥ 4 and suitable δ"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: CONJECTURE
+    layers: [3, 4]
+    domain: Materia
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 3A
+
+  ATM-M-011:
+    idea: "PM naturally in PSPACE; isomorphic computation dissolves simulation/reality boundary"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [3, 4]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-M-012:
+    idea: "Isomorphic computation: when PM models physical process, simulation IS the thing — category collapse"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [0, 3]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 2B
+
+  ATM-M-013:
+    idea: "Five governance constraints: G1-G5 (no hidden state, degradation, thermodynamic honesty, composability, seed programmability)"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: PROTOCOL
+    layers: [3, 5, 6]
+    domain: Materia
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-M-014:
+    idea: "E1-E2: materon synthesis candidates and compiler problem"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: QUESTION
+    layers: [0, 3]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 3A
+
+  ATM-M-015:
+    idea: "E3-E5: observation, evolutionary PM, materia-language gap"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: QUESTION
+    layers: [4, 5]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 3A
+
+  ATM-M-016:
+    idea: "Complete PM schema tree: primitive → layers → properties → governance → frontiers"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: SCHEMA
+    layers: [0, 1, 2, 3, 4, 5, 6]
+    domain: Materia
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-M-017:
+    idea: "Core move: hardware/software distinction is fabrication artifact, not reality — PM dissolves it"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [0]
+    domain: Materia
+    formalization: INTUITIVE
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-M-018:
+    idea: "Bootstrap recursion: self-reconfiguration (L4) requires controller also made of materons — von Neumann self-reproducing automaton problem; need configuration C* whose execution maintains its own computational capacity while modifying topology"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: QUESTION
+    layers: [4, 5]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 3A
+
+  ATM-M-019:
+    idea: "Reliability threshold: physical materons have stochastic δ_real: S × S^k → Dist(S) governed by Boltzmann factor; need error model, threshold theorem, and physical argument that candidates sit below threshold; extend materon tuple to (σ, Γ, N, δ, E) with energy landscape"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: QUESTION
+    layers: [0, 3]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 3A
+
+  ATM-M-020:
+    idea: "Multiverse Oracle protocol: run N parallel PM instances, diff functional spread — low divergence = self-sustaining (Gap 1), divergence rate = reliability characterization (Gap 2); metric d_functional = sup over inputs of output difference; selection replaces construction"
+    doc: DOC-M-01
+    provenance: HYBRID
+    nature: MODEL
+    layers: [4, 5, 6]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 3A
+
+  ATM-M-021:
+    idea: "Friction-based branching: instances generated by obstruction not choice; Ω = attractor, F(p,t) = friction, branch when F > θ; portal = field where F > 0; scale-invariant; instances reaching same Ω merge (annealing); the multiverse is what friction looks like from outside"
+    doc: DOC-M-01
+    provenance: LOCAL
+    nature: MODEL
+    layers: [0, 4, 5, 6]
+    domain: Materia
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 3A
+
+  # ─── OBJECTS/COMPOSITION (O) ──────────────────────────────────────
+
+  ATM-O-001:
+    idea: "System object with σ, ◁, ≺; five axioms: scale stratification, transitive composition, finite grounding, sequencing, nesting closure"
+    doc: DOC-O-01
+    provenance: HYBRID
+    nature: AXIOM
+    layers: [0, 1, 2, 3]
+    domain: Composition
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-O-002:
+    idea: "Well-Founded Decomposition: unique ordered rooted tree from ◁ and ≺"
+    doc: DOC-O-01
+    provenance: HYBRID
+    nature: PROOF
+    layers: [2, 3]
+    domain: Composition
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-O-003:
+    idea: "Python SystemObject implementing ◁, ≺, decompose, bidirectional walk"
+    doc: DOC-O-01
+    provenance: HYBRID
+    nature: ALGORITHM
+    layers: [2, 3, 4]
+    domain: Composition
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-O-004:
+    idea: "Five composition operations: Assemble, Sequence, Nest, Decompose, Walk"
+    doc: DOC-O-01
+    provenance: HYBRID
+    nature: SCHEMA
+    layers: [2, 3]
+    domain: Composition
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-O-005:
+    idea: "Every system object is simultaneously product, position, and part — three roles compose without conflict"
+    doc: DOC-O-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [2, 3]
+    domain: Composition
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-O-006:
+    idea: "[DUPLICATE] Byte-identical repeat of primary content — excised 2026-04-04 during restructuring"
+    doc: DOC-O-01
+    provenance: HYBRID
+    nature: SCHEMA
+    layers: [0]
+    domain: Composition
+    formalization: EXCISED
+    editorial: EXCISED
+    integration: EXCISED
+
+  ATM-O-007:
+    idea: "Self-correction: 7-stratum sample was illustrative, not exhaustive; formalize over arbitrary |L| ≥ 2"
+    doc: DOC-O-01
+    provenance: HYBRID
+    nature: DISTINCTION
+    layers: [0, 2, 3]
+    domain: Composition
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-O-008:
+    idea: "Real structure: open stratum count, AS = ontological promotion, recursive closure, sample demonstrates pattern"
+    doc: DOC-O-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [0, 2, 3]
+    domain: Composition
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1A
+
+  # ─── GOVERNANCE (G) ──────────────────────────────────────────────
+
+  ATM-G-001:
+    idea: "Governance inverted: reality's constraints on humanity, not humanity's rules on reality"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: DISTINCTION
+    layers: [0, 6]
+    domain: Governance
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-G-002:
+    idea: "Physical law as outermost container: thermodynamics, c, QM, gravity, EM spectrum, α"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [3, 6]
+    domain: Governance
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-G-003:
+    idea: "Planetary boundaries: atmosphere, magnetosphere, tectonics, hydrology, carrying capacity, solar"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [3, 6]
+    domain: Governance
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-G-004:
+    idea: "Biological containment: mortality, cognition, metabolism, circadian, genetics, neurochemistry"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [3, 5]
+    domain: Governance
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-G-005:
+    idea: "Information-theoretic governance: Gödel, halting, Heisenberg, Landauer, Bekenstein"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [3, 6]
+    domain: Governance
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-G-006:
+    idea: "Temporal governance: arrow of time, cosmic epoch, civilizational age, light cone"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [4]
+    domain: Governance
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-G-007:
+    idea: "Containment stack synthesis: Physical Law → Info-Theoretic → Planetary → Biological → Temporal → Human₂₀₂₆"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: MODEL
+    layers: [0, 3, 6]
+    domain: Governance
+    formalization: FORMAL
+    editorial: FLAGGED
+    integration: 1A
+
+  ATM-G-008:
+    idea: "Meta-rule: no layer overrides parent; 2026 = first moment contained entity describes own containment"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [5, 6]
+    domain: Governance
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-G-009:
+    idea: "Ordering inconsistency between body tiers and synthesis diagram"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: DISTINCTION
+    layers: [0, 6]
+    domain: Governance
+    formalization: SKETCHED
+    editorial: FLAGGED
+    integration: 2A
+
+  ATM-G-010:
+    idea: "Five missing tiers: chemical, complexity-theoretic, stochastic, energetic-economic, evolutionary"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [3, 6]
+    domain: Governance
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-G-011:
+    idea: "Sound elements: containment-stack metaphor, 2026-instantiation, formal statements, tier coherence"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: CLAIM
+    layers: [6]
+    domain: Governance
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 2A
+
+  ATM-G-012:
+    idea: "Revised 10-tier stack; undeclared Platonic position on math-above-physics"
+    doc: DOC-G-01
+    provenance: HYBRID
+    nature: MODEL
+    layers: [0, 3, 6]
+    domain: Governance
+    formalization: SKETCHED
+    editorial: CLEAN
+    integration: 1A
+
+  # ─── VERSE/MULTIVERSE (V) ────────────────────────────────────────
+
+  ATM-V-001:
+    idea: "Multiverse primitives: U, M, R, S, t, φ"
+    doc: DOC-V-01
+    provenance: HYBRID
+    nature: DEFINITION
+    layers: [0, 1]
+    domain: Multiverse
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-V-002:
+    idea: "Eight axioms A1-A8 + derived D1 Multiverse Completeness"
+    doc: DOC-V-01
+    provenance: HYBRID
+    nature: AXIOM
+    layers: [0, 2, 3, 6]
+    domain: Multiverse
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-V-003:
+    idea: "Theorems 1-2: closure under propagation, irreversibility of branching → M is a forest"
+    doc: DOC-V-01
+    provenance: HYBRID
+    nature: PROOF
+    layers: [2, 3]
+    domain: Multiverse
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-V-004:
+    idea: "Theorems 3-4: reachability from seed (well-foundedness), cardinality growth bound (exponential)"
+    doc: DOC-V-01
+    provenance: HYBRID
+    nature: PROOF
+    layers: [2, 3]
+    domain: Multiverse
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A
+
+  ATM-V-005:
+    idea: "Python Multiverse implementing seed, step, propagate_all, trace, verify_non_collapse"
+    doc: DOC-V-01
+    provenance: HYBRID
+    nature: ALGORITHM
+    layers: [3, 4]
+    domain: Multiverse
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-V-006:
+    idea: "Binary branching example: 2⁴ terminal universes, 31 total, non-collapse verified"
+    doc: DOC-V-01
+    provenance: HYBRID
+    nature: ALGORITHM
+    layers: [3, 4]
+    domain: Multiverse
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1B
+
+  ATM-V-007:
+    idea: "Three-layer pipeline: Logic (IS) → Mathematics (MUST) → Algorithm (COMPUTE); propagation is generative continuation"
+    doc: DOC-V-01
+    provenance: HYBRID
+    nature: FRAMEWORK
+    layers: [0, 2, 3, 4]
+    domain: Multiverse
+    formalization: FORMAL
+    editorial: CLEAN
+    integration: 1A

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Regenerate temporal + ideal data, serve locally, and open the visualization.
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+data_dir="$root/_build/data"
+mkdir -p "$data_dir"
+
+echo "Extracting temporal snapshots..."
+python3 "$root/bin/sys-extract-snapshots" > "$data_dir/snapshots.json"
+
+echo "Extracting ideal topology..."
+python3 "$root/bin/sys-extract-ideal" > "$data_dir/ideal.json"
+
+echo "Serving at http://localhost:8787/spatiotemporal-cartography.html"
+cd "$root"
+
+# Trap to kill server on exit
+cleanup() { kill %1 2>/dev/null || true; }
+trap cleanup EXIT
+
+python3 -m http.server 8787 --bind 127.0.0.1 &
+sleep 1
+open "http://localhost:8787/spatiotemporal-cartography.html"
+
+echo "Press Ctrl+C to stop server."
+wait

@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+import os
+import json
+import shutil
+import argparse
+from pathlib import Path
+
+root = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+registry_path = root / "registry" / "data"
+
+def load_graph():
+    entities = {}
+    relations = []
+    if not registry_path.exists():
+        return entities, relations
+        
+    for p in registry_path.glob("*.json"):
+        if p.name == "ledger.jsonl":
+            continue
+        with open(p) as f:
+            try:
+                data = json.load(f)
+                if "uid" in data:
+                    uid = data["uid"]
+                    if uid.startswith("ent_"):
+                        entities[uid] = data
+                    elif uid.startswith("rel_"):
+                        relations.append(data)
+            except json.JSONDecodeError:
+                pass
+    return entities, relations
+
+def build_ontology_tree(root_dir, entities, relations):
+    # Find roots (entities with no incoming PARENT_CHILD)
+    has_parent = set()
+    for r in relations:
+        if r.get("type") == "PARENT_CHILD":
+            has_parent.add(r.get("target_uid"))
+            
+    roots = [uid for uid in entities.keys() if uid not in has_parent]
+    
+    # Adjacency
+    adj = {uid: [] for uid in entities.keys()}
+    for r in relations:
+        if r.get("type") == "PARENT_CHILD":
+            if r["source_uid"] in adj:
+                adj[r["source_uid"]].append(r["target_uid"])
+                
+    def export_node(uid, current_path):
+        ent = entities[uid]
+        name = ent.get("expression", {}).get("name", uid).replace("/", "_")
+        node_path = current_path / name
+        os.makedirs(node_path, exist_ok=True)
+        
+        # Create a symlink to reality
+        symlink_target = registry_path / f"{uid}.json"
+        symlink_path = node_path / f"entity_{uid}.json"
+        
+        if symlink_path.is_symlink() or symlink_path.exists():
+            symlink_path.unlink()
+            
+        # Write relative symlink connecting the logical folder back to the flat true data
+        os.symlink(os.path.relpath(symlink_target, node_path), symlink_path)
+        
+        for child_uid in adj[uid]:
+            export_node(child_uid, node_path)
+
+    for r_uid in roots:
+        export_node(r_uid, root_dir)
+
+def main():
+    parser = argparse.ArgumentParser(description="Dynamically project topological filesystems.")
+    parser.add_argument("--dimension", choices=["conceptual", "temporal"], default="conceptual", help="Variable constraint for projection.")
+    
+    args = parser.parse_args()
+    
+    projected_root = root / "_build" / "projected"
+    if projected_root.exists():
+        shutil.rmtree(projected_root)
+    os.makedirs(projected_root, exist_ok=True)
+    
+    entities, relations = load_graph()
+    
+    if args.dimension == "conceptual":
+        print("Projecting conceptual ontology graph...")
+        build_ontology_tree(projected_root, entities, relations)
+    elif args.dimension == "temporal":
+        print("Projecting temporal timeline graph...")
+        # Sort by creation date
+        for uid, ent in entities.items():
+            dt = ent.get("created_at", "1970-01-01T00:00:00")[:10]
+            try:
+                year, month, day = dt.split("-")
+            except Exception:
+                year, month, day = "0000", "00", "00"
+            dir_path = projected_root / year / month / day
+            os.makedirs(dir_path, exist_ok=True)
+            name = ent.get("expression", {}).get("name", uid).replace("/", "_")
+            node_path = dir_path / name
+            os.makedirs(node_path, exist_ok=True)
+            symlink_path = node_path / f"entity_{uid}.json"
+            if not symlink_path.exists():
+                os.symlink(os.path.relpath(registry_path / f"{uid}.json", node_path), symlink_path)
+                
+    print(f"Success. View physical projection at {projected_root}/")
+
+if __name__ == "__main__":
+    main()
