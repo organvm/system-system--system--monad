@@ -1,7 +1,7 @@
 # Cascade Correction Plan — Atom Registry Defect Propagation
 
 **Date**: 2026-04-04
-**Workspace**: `/Users/4jp/system-system--system`
+**Workspace**: `~/system-system--system`
 **Trigger**: Review of atomization identified 6 structural defects in `atom-registry.yaml` and dependent coverage maps
 
 ---

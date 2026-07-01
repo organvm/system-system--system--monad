@@ -11,5 +11,3 @@ _build/
 _projected/
 coverage/
 
-# removed inadvertently-committed local session artifacts (PII containment)
-archive/sessions
