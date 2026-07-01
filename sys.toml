@@ -64,8 +64,8 @@ json_indent    = 2
 registry_path  = "registry/data"
 
 [protocol.escrow]
-body_path = "/Users/4jp/Workspace/meta-organvm"
-mind_path = "/Users/4jp/Workspace/organvm-iv-taxis"
-seed_path = "/Users/4jp/sovereign--ground/holds--same/a-organvm"
+body_path = "~/Workspace/meta-organvm"
+mind_path = "~/Workspace/organvm-iv-taxis"
+seed_path = "~/sovereign--ground/holds--same/a-organvm"
 timeout_s = 300
 storage   = "archive/escrow"
